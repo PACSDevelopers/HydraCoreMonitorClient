@@ -1,0 +1,45 @@
+language: php
+
+php:
+  - hhvm
+  - hhvm-nightly
+
+env: DB=mysql
+
+jdk: oraclejdk7
+
+before_install:
+  - composer self-update
+
+install:
+  - composer install
+  - sudo apt-get install ruby-dev build-essential nodejs
+  - npm install -g less
+  - gem install sass --pre
+  - mysql -e 'create database HydraCore;'
+  - cd tests
+  - sudo sh before.sh
+
+script:
+    - ../vendor/phpunit/phpunit/phpunit --bootstrap bootstrap.php --verbose --debug --colors --stop-on-failure --configuration phpunit.xml
+    - cd ..
+    - touch .hhconfig
+    - hh_client start
+    - hh_client check
+
+addons:
+  hosts:
+    - local.hydracore.io
+
+build_failure_conditions:
+    # No critical issue is present
+    - 'issues.severity(= CRITICAL).exists'
+
+    # No new critical issue is introduced (existing ones are tolerated)
+    - 'issues.severity(= CRITICAL).new.exists'
+
+    # Class has no tests
+    - 'classes.metric("php_code_coverage.coverage", = 0).exists'
+
+    # Rating is D or worse
+    - 'elements.rating(<= D).exists'

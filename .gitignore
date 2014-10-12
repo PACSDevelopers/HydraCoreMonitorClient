@@ -1,0 +1,39 @@
+# Mac OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Linux
+*~
+
+
+# SASS Cache
+*.scssc
+
+# IDE Settings: IntelliJ, RubyMine, PhpStorm, AppCode, DreamWeaver
+.idea/
+*.ipr
+*.iws
+*.iml
+out/
+.idea_modules/
+_notes
+dwsync.xml
+
+core/hooks/postReceive/tmp
+core/hooks/postReceive/tmp/
+core/hooks/postReceive/tmp/*
+public/resources/js/*
+public/resources/less/*
+public/resources/scss/
+settings/settings.php
+public/resources/.less/*
+assets/*
+tmp/*
+tmp/processes/*
+*.log
+vendor/*
+translations/*.res

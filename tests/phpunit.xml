@@ -1,0 +1,39 @@
+<!-- Here you define all the unit tests in order of dependency -->
+<phpunit>
+    <testsuites>
+        <testsuite name="CORE_ALL">
+            <!-- Here you define all the core unit tests in order of dependency -->
+            <!-- CORE -->
+            <file>core/core.class.test.php</file>
+
+            <!-- CORE MODULES DATA -->
+            <file>core/modules/data/site.class.test.php</file>
+            <file>core/modules/data/db.class.test.php</file>
+            <file>core/modules/data/cache.class.test.php</file>
+            <file>core/modules/data/page.class.test.php</file>
+            <file>core/modules/data/user.class.test.php</file>
+            <file>core/modules/data/email.class.test.php</file>
+            <file>core/modules/data/encryption.class.test.php</file>
+            <file>core/modules/data/error.class.test.php</file>
+
+            <!-- CORE MODULES RENDER -->
+            <file>core/modules/render/table.class.test.php</file>
+
+            <!-- CORE MODULES RENDER FORMS -->
+            <file>core/modules/render/forms/button.class.test.php</file>
+            <file>core/modules/render/forms/checkbox.class.test.php</file>
+            <file>core/modules/render/forms/form.class.test.php</file>
+            <file>core/modules/render/forms/input.class.test.php</file>
+            <file>core/modules/render/forms/select.class.test.php</file>
+            <file>core/modules/render/forms/textarea.class.test.php</file>
+
+            <!-- HOOKS -->
+            <file>hooks/pre-receive.test.php</file>
+            <file>hooks/post-receive.test.php</file>
+        </testsuite>
+        <testsuite name="APPLICATION_ALL">
+            <!-- Here you define all the application tests in order of dependency -->
+            <!-- APPLICATION -->
+        </testsuite>
+    </testsuites>
+</phpunit>

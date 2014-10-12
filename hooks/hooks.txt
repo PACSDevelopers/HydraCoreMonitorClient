@@ -1,0 +1,2 @@
+The hooks folder is used for creating hooks for the application, currently the only default hook is post-recieve which
+compiles all resources.

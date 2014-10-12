@@ -1,0 +1,3 @@
+I suggest putting your application core within this folder.
+
+This should include all application specific classes in some folder structure.

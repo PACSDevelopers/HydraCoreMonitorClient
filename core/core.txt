@@ -1,0 +1,24 @@
+The core folder is where HydraCore stores all of it's main system functionality, it's generally a bad idea to edit these
+unless you know what you are doing, note that all changes inside this folder must follow the licence strictly.
+
+Copyright (c) Ryan Howell 2014
+
+GNU GENERAL PUBLIC LICENSE (Version 3, 29 June 2007)
+
+Full license is available at: http://www.gnu.org/licenses/gpl.html
+
+Required
+    Disclose Source
+    License and copyright notice
+    State Changes
+
+Permitted
+    Commercial Use
+    Distribution
+    Modification
+    Patent Grant
+    Private Use
+
+Forbidden
+    Hold Liable
+    Sublicensing
