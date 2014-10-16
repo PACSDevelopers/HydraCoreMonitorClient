@@ -114,9 +114,7 @@
 		{
 
 				if ($timeSlice === false) {
-
-						$timeSlice = floor(time() / 30);
-
+					$timeSlice = floor(time() / 30);
 				}
 
 
@@ -136,15 +134,13 @@
 
 
 				// Use last char of result as index/offset
-				$offset = ord(mb_substr($hm, -1)) & 0x0F;
+				$offset = ord(substr($hm, -1)) & 0x0F;
 
 
 
 				// grab 4 bytes of the result
-				$hashpart = mb_substr($hm, $offset, 4);
-
-
-
+				$hashpart = substr($hm, $offset, 4);
+                
 				// Unpack binary value
 				$value = unpack('N', $hashpart);
 
@@ -264,7 +260,7 @@
 
 
 
-				$paddingCharCount = mb_substr_count($secret, $base32chars[32]);
+				$paddingCharCount = substr_count($secret, $base32chars[32]);
 
 				$allowedValues = array(6, 4, 3, 1, 0);
 
@@ -274,7 +270,7 @@
 
 						if ($paddingCharCount == $allowedValues[$i] &&
 
-								mb_substr($secret, -($allowedValues[$i])) != str_repeat($base32chars[32], $allowedValues[$i])) return false;
+								substr($secret, -($allowedValues[$i])) != str_repeat($base32chars[32], $allowedValues[$i])) return false;
 
 				}
 
@@ -354,7 +350,7 @@
 
 				}
 
-				if ($padding && ($x = mb_strlen($binaryString) % 40) != 0) {
+				if ($padding && ($x = strlen($binaryString) % 40) != 0) {
 
 						if ($x == 8) $base32 .= str_repeat($base32chars[32], 6);
 

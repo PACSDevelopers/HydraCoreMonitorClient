@@ -28,7 +28,9 @@
         {
             switch ($class) {
                 /* Usable classes */
-                
+                case 'HCMC\Authenticator':
+                    require_once(HC_APPLICATION_LOCATION . '/modules/data/authenticator.class.php');
+                    break;
             }
         }
     }

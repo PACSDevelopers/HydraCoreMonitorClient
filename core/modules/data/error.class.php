@@ -363,7 +363,6 @@
 		public static function errorHandler($errno = 1, $errstr = '?', $errfile = '?', $errline = '?', $skipTrace = 0, $traceArray = [], $isException = false, $customError = false)
 
 		{
-
 			if (defined('ERROR_LOGGING')) {
 
 				if (ERROR_LOGGING === 'NONE') {
