@@ -85,7 +85,8 @@
 
 					require_once $path;
 
-					if($this->settings['enabled'] === true) {
+                    
+                    if($this->settings['enabled'] === true) {
 
 						$class = $this->getPageName($path);
 

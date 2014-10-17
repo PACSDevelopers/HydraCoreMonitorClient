@@ -71,11 +71,11 @@ class DB extends Core
 
         // Parse global / local options
         $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
-
+        
         if(!count($globalSettings['database'])) {
             throw new \Exception('Unable to find database settings');
         }
-
+        
         if(!(bool)count(array_filter(array_keys($globalSettings['database']), 'is_string'))) {
             $found = false;
             if(isset($settings['name'])) {

@@ -17,8 +17,8 @@ if(!defined('ENVIRONMENT')) {
 }
 
 if(!defined('PROTOCOL')) {
-    if(isset($_SERVER) && isset($_SERVER['SERVER_PROTOCOL'])) {
-        define('PROTOCOL', $_SERVER['SERVER_PROTOCOL']);
+    if(isset($_SERVER) && isset($_SERVER['HTTPS'])) {
+        define('PROTOCOL', 'https');
     } else {
         define('PROTOCOL', 'http');
     }

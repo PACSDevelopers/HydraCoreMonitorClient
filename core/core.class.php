@@ -417,6 +417,12 @@
 
 					break;
 
+                case 'HC\Hooks\Cron':
+
+                    require_once(HC_CORE_LOCATION . '/hooks/cron.class.php');
+
+                    break;
+
 			}
 
 		}

@@ -136,6 +136,8 @@
 
 			require_once(HC_CORE_LOCATION . '/hooks/preReceive/lock.class.php');
 
+            require_once(HC_CORE_LOCATION . '/hooks/cron.class.php');
+
 		}
 
 		// Create the core object

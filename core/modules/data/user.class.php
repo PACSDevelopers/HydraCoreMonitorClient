@@ -302,7 +302,7 @@
 
 
 			if (session_status() == PHP_SESSION_ACTIVE) {
-				setcookie(session_name(), session_id(), 1, '/', NULL, true);
+				setcookie(session_name(), session_id(), 0, '/', NULL, true);
 
 				if(isset($_SESSION['user'])) {
 					$_SESSION['user'] = null;
@@ -312,9 +312,9 @@
 				$_SESSION = null;
 				unset($_SESSION);
 
-		    session_unset();
-		    session_destroy();
-		    session_write_close();
+                session_unset();
+                session_destroy();
+                session_write_close();
 			}
 
 		}
