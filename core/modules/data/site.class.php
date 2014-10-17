@@ -5,128 +5,128 @@
 
 
 
-	/**
-	 * Class Site
-	 *
-	 * This class defines the site object based on settings provided, loading other classes that are needed.
-	 */
+    /**
+     * Class Site
+     *
+     * This class defines the site object based on settings provided, loading other classes that are needed.
+     */
 
-	class Site extends Core
+    class Site extends Core
 
-	{
+    {
 
-		// Setup class public variables
+        // Setup class public variables
 
 
-		// Setup class protected variables
-		/**
-		 * @var array
-		 */
+        // Setup class protected variables
+        /**
+         * @var array
+         */
 
-		protected $settings = [
+        protected $settings = [
 
-			'database' => [],
+            'database' => [],
 
-			'users' => [
+            'users' => [
 
-				'salt' => 'USER_SALT'
+                'salt' => 'USER_SALT'
 
-			],
+            ],
 
-			'compilation' => [
+            'compilation' => [
 
-				'languages' => [
+                'languages' => [
 
-					'js' => false,
+                    'js' => false,
 
                     'jsx' => false,
 
-					'scss' => false,
+                    'scss' => false,
 
-					'less' => false
+                    'less' => false
 
-				],
+                ],
 
-				'path' => '/resources/'
+                'path' => '/resources/'
 
-			],
+            ],
 
-			'email' => [
+            'email' => [
 
-				'mailSystem' => 'default', // MailGun - SendGrid - default
-				'sendGridUser' => false,
+                'mailSystem' => 'default', // MailGun - SendGrid - default
+                'sendGridUser' => false,
 
-				'sendGridPass' => false,
+                'sendGridPass' => false,
 
-				'emailType' => 'html',
+                'emailType' => 'html',
 
-				'defaults' => [
+                'defaults' => [
 
-					'sentFromAddress' => 'example@hydracore.io',
+                    'sentFromAddress' => 'example@hydracore.io',
 
-					'sentFromName' => 'HydraCore'
+                    'sentFromName' => 'HydraCore'
 
-				]
+                ]
 
-			],
+            ],
 
-			'pages' => [
+            'pages' => [
 
-				'views' => [],
+                'views' => [],
 
-				'resources' => [],
+                'resources' => [],
 
-				'cacheViews' => false,
+                'cacheViews' => false,
 
-				'authentication' => false
+                'authentication' => false
 
-			],
+            ],
 
-			'encryption' => [],
+            'encryption' => [],
 
-			'cache' => [],
+            'cache' => [],
 
-			'errors' => [
+            'errors' => [
 
-				// If any of the values in this array are contained within the error message, it will be ignored
-				'ignore' => [
-
-
-
-				]
-
-			],
-
-		];
+                // If any of the values in this array are contained within the error message, it will be ignored
+                'ignore' => [
 
 
 
-		/**
-		 * @var float|string
-		 */
+                ]
+
+            ],
+
+        ];
+
+
+
+        /**
+         * @var float|string
+         */
 
         protected $startTime = 0;
         protected $rUsage = 0;
         protected $nonCPUBoundTime = 0;
         protected $numberOfQueries = 0;
-				protected $numberOfSelects = 0;
+        protected $numberOfSelects = 0;
         protected $numberOfCacheHits = 0;
         protected $sleepTime = 0;
 
 
 
-		// Setup Constructor
+        // Setup Constructor
 
 
-		/**
-		 * @param array $settings
-		 */
+        /**
+         * @param array $settings
+         */
 
-		public function __construct(&$settings = [])
+        public function __construct(&$settings = [])
 
-		{
+        {
 
-			$this->settings = $settings = $this->parseOptions($settings, $this->settings);
+            $this->settings = $settings = $this->parseOptions($settings, $this->settings);
 
             mb_internal_encoding(ENCODING);
             mb_http_output();
@@ -136,20 +136,20 @@
 
             date_default_timezone_set(TIMEZONE);
 
-			if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-				$locale = \Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']);
-			} else {
-				$locale = 'en-GB';
-			}
+            if(isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+                $locale = \Locale::acceptFromHttp($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+            } else {
+                $locale = 'en-GB';
+            }
 
-			\Locale::setDefault($locale);
+            \Locale::setDefault($locale);
 
-			// Setup Page Timer
-			if(isset($_SERVER['REQUEST_TIME_FLOAT'])) {
-				$this->startTime = $_SERVER['REQUEST_TIME_FLOAT'];
-			} else {
-				$this->startTime = microtime(true);
-			}
+            // Setup Page Timer
+            if(isset($_SERVER['REQUEST_TIME_FLOAT'])) {
+                $this->startTime = $_SERVER['REQUEST_TIME_FLOAT'];
+            } else {
+                $this->startTime = microtime(true);
+            }
 
 
             if(ENVIRONMENT !== 'PRODUCTION') {
@@ -160,17 +160,17 @@
                 $this->startMemoryUsageReal = $this->getCurrentMemoryUsage(true);
             }
 
-			// Autoloading
-			spl_autoload_register('HC\Core::autoLoader');
+            // Autoloading
+            spl_autoload_register('HC\Core::autoLoader');
 
 
 
-			// Error Handling
-			$this->errorReporting();
+            // Error Handling
+            $this->errorReporting();
 
-			set_error_handler('HC\Error::errorHandler', -1);
+            set_error_handler('HC\Error::errorHandler', -1);
 
-			set_exception_handler('HC\Error::exceptionHandler');
+            set_exception_handler('HC\Error::exceptionHandler');
 
             // Shutdown handling
             if (defined('REGISTER_SHUTDOWN')) {
@@ -180,113 +180,113 @@
                 }
             }
 
-			return true;
+            return true;
 
-		}
-
-
+        }
 
 
 
-		public function __destruct()
 
-		{
 
-			$this->settings = null;
-			$this->startTime = null;
+        public function __destruct()
+
+        {
+
+            $this->settings = null;
+            $this->startTime = null;
             restore_error_handler();
             restore_exception_handler();
 
-		}
+        }
 
 
 
-		/**
-		 * @return array
-		 */
+        /**
+         * @return array
+         */
 
-		public function getSettings()
+        public function getSettings()
 
-		{
-
-
-
-			// Return the settings used to create the site object
-			return $this->settings;
-
-		}
+        {
 
 
 
-		/**
-		 * @return float|string
-		 */
+            // Return the settings used to create the site object
+            return $this->settings;
 
-		public function getStartTime()
-
-		{
+        }
 
 
 
-			// Return the time the site was started
-			return $this->startTime;
+        /**
+         * @return float|string
+         */
 
-		}
+        public function getStartTime()
 
-
-		/**
-		 * @return bool
-		 */
-
-		public static function errorReporting()
-
-		{
-
-			if (defined('ERROR_LOGGING')) {
-
-				switch (ERROR_LOGGING) {
-
-					case 'ALL':
-
-						error_reporting(E_ALL);
-
-						return true;
+        {
 
 
 
-					case 'FATAL':
+            // Return the time the site was started
+            return $this->startTime;
 
-						error_reporting(E_ERROR | E_PARSE);
-
-
-
-						return true;
+        }
 
 
+        /**
+         * @return bool
+         */
 
-					case 'NONE':
+        public static function errorReporting()
 
-						error_reporting(0);
+        {
+
+            if (defined('ERROR_LOGGING')) {
+
+                switch (ERROR_LOGGING) {
+
+                    case 'ALL':
+
+                        error_reporting(E_ALL);
+
+                        return true;
 
 
 
-						return true;
+                    case 'FATAL':
 
-				}
-
-			}
+                        error_reporting(E_ERROR | E_PARSE);
 
 
 
-			return false;
+                        return true;
 
-		}
 
-		/**
-		 * @return bool
-		 */
 
-		public static function shutDown() {
+                    case 'NONE':
+
+                        error_reporting(0);
+
+
+
+                        return true;
+
+                }
+
+            }
+
+
+
+            return false;
+
+        }
+
+        /**
+         * @return bool
+         */
+
+        public static function shutDown() {
 
 
             if (isset($GLOBALS['skipShutdown'])) {
@@ -304,20 +304,192 @@
             // Loop through all globals
             foreach ($GLOBALS as &$global) {
 
-
-
                 // If it's an object
                 if (is_object($global)) {
+                    if(get_class($global) !== 'HC\\Site') {
+                        // Only destruct hydracore objects - or objects that extend hydracore
+                        if ((mb_strpos(get_class($global), 'HC\\') !== false) || (self::extendsHydraCore($global))) {
 
-                    // Only destruct hydracore objects - or objects that extend hydracore
-                    if ((mb_strpos(get_class($global), 'HC\\') !== false) || (self::extendsHydraCore($global))) {
+                            if (method_exists($global, '__destruct')) {
 
-                        if (method_exists($global, '__destruct')) {
+                                // Call the destructor
+                                $global->__destruct();
 
-                            // Call the destructor
-                            $global->__destruct();
+                            }
 
                         }
+                    }
+                }
+
+            }
+
+            $GLOBALS['skipShutdown'] = true;
+
+            register_postsend_function('HC\Site::postSend');
+
+            return true;
+
+        }
+
+        /**
+         * @return bool
+         */
+
+        public static function postSend() {
+
+
+            if (isset($GLOBALS['skipPostSend'])) {
+
+                if ($GLOBALS['skipPostSend']) {
+
+                    return false;
+
+                }
+
+            }
+
+            $endTime = microtime(true);
+
+            if(function_exists('getallheaders')) {
+                $headers = \getallheaders();
+                if(!isset($headers['X-Hc-Skip-App-Stats'])) {
+                    $siteObject = $GLOBALS['HC_CORE']->getSite();
+                    $timeCPUBound = $siteObject->getTimeCPUBound();
+                    $queries = $siteObject->getNumberOfQueries();
+
+                    $startTime = $siteObject->getStartTime();
+                    $responseTime = ($endTime - $startTime);
+
+                    if(apc_exists('HC_APP_STATS_REQUESTS') && apc_exists('HC_APP_STATS_TIME') && apc_exists('HC_APP_STATS_TIME_CPUBOUND') && apc_exists('HC_APP_STATS_QPM')) {
+                        // Increment Average
+                        $requests = apc_fetch('HC_APP_STATS_REQUESTS');
+                        $avgRespTime = apc_fetch('HC_APP_STATS_TIME');
+                        $oldQueries = apc_fetch('HC_APP_STATS_QPM');
+                        $avgTimeCPUBound = apc_fetch('HC_APP_STATS_TIME_CPUBOUND');
+                        if($requests && $avgRespTime && ($avgRespTime < 1000)) {
+                            apc_store('HC_APP_STATS_REQUESTS', ($requests + 1));
+                            $newAvgRespTime = (($avgRespTime * $requests) + $responseTime) / ($requests + 1);
+                            apc_store('HC_APP_STATS_TIME', $newAvgRespTime);
+                            $newAvgTimeCPUBound = (($avgTimeCPUBound * $requests) + $timeCPUBound) / ($requests + 1);
+                            apc_store('HC_APP_STATS_TIME_CPUBOUND', $newAvgTimeCPUBound);
+                        }
+                        apc_store('HC_APP_STATS_QPM', ($queries + $oldQueries));
+
+                    } else {
+                        apc_store('HC_APP_STATS_REQUESTS', 1, 60);
+                        apc_store('HC_APP_STATS_TIME', $responseTime, 60);
+                        apc_store('HC_APP_STATS_TIME_CPUBOUND', $timeCPUBound, 60);
+                        apc_store('HC_APP_STATS_QPM', $queries, 60);
+                    }
+                }
+            }
+
+            $GLOBALS['skipPostSend'] = true;
+
+            return true;
+
+        }
+
+
+        public static function extendsHydraCore($class) {
+
+            $parentClass = get_parent_class($class);
+
+            if($parentClass) {
+
+                if(mb_strpos($parentClass, 'HC\\') !== false) {
+
+                    return true;
+
+                } else {
+
+                    return self::extendsHydraCore($parentClass);
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+
+
+        public static function extendsHydraCoreClass($class, $desiredClass) {
+
+            $parentClass = get_parent_class($class);
+
+            if($parentClass) {
+
+                if(mb_strpos($parentClass, 'HC\\' . $desiredClass) !== false) {
+
+                    return true;
+
+                } else {
+
+                    return self::extendsHydraCoreClass($parentClass, $desiredClass);
+
+                }
+
+            }
+
+            return false;
+
+        }
+
+        /**
+         * @return string
+         */
+
+        public static function getLinuxDistro()
+
+        {
+
+            if (PHP_OS != 'Linux') {
+
+                return '';
+
+            }
+
+            // Define what we know of the distributions
+            $distros = [
+
+                'Arch' => 'arch-release',
+
+                'Debian' => 'debian_version',
+
+                'Fedora' => 'fedora-release',
+
+                'Redhat' => 'redhat-release',
+
+                'CentOS' => 'centos-release',
+
+                'Ubuntu' => 'lsb-release'
+
+            ];
+
+
+
+            // Scan etc
+            $etcList = array_reverse(scandir('/etc'));
+
+
+
+            //Loop through /etc results
+            $OSDistro = '';
+
+            foreach ($etcList as $file) {
+
+                //Loop through list of distributions
+                foreach ($distros as $distroReleaseFile) {
+
+                    //Match was found.
+                    if ($distroReleaseFile === $file) {
+
+                        // Find distribution
+                        $OSDistro = array_search($distroReleaseFile, $distros);
+
+                        break 2;
 
                     }
 
@@ -325,123 +497,11 @@
 
             }
 
-			return true;
-
-		}
 
 
+            return $OSDistro;
 
-		public static function extendsHydraCore($class) {
-
-			$parentClass = get_parent_class($class);
-
-			if($parentClass) {
-
-				if(mb_strpos($parentClass, 'HC\\') !== false) {
-
-					return true;
-
-				} else {
-
-					return self::extendsHydraCore($parentClass);
-
-				}
-
-			}
-
-			return false;
-
-		}
-
-
-
-		public static function extendsHydraCoreClass($class, $desiredClass) {
-
-			$parentClass = get_parent_class($class);
-
-			if($parentClass) {
-
-				if(mb_strpos($parentClass, 'HC\\' . $desiredClass) !== false) {
-
-					return true;
-
-				} else {
-
-					return self::extendsHydraCoreClass($parentClass, $desiredClass);
-
-				}
-
-			}
-
-			return false;
-
-		}
-
-		/**
-		 * @return string
-		 */
-
-		public static function getLinuxDistro()
-
-		{
-
-			if (PHP_OS != 'Linux') {
-
-				return '';
-
-			}
-
-			// Define what we know of the distributions
-			$distros = [
-
-				'Arch' => 'arch-release',
-
-				'Debian' => 'debian_version',
-
-				'Fedora' => 'fedora-release',
-
-				'Redhat' => 'redhat-release',
-
-				'CentOS' => 'centos-release',
-
-				'Ubuntu' => 'lsb-release'
-
-			];
-
-
-
-			// Scan etc
-			$etcList = array_reverse(scandir('/etc'));
-
-
-
-			//Loop through /etc results
-			$OSDistro = '';
-
-			foreach ($etcList as $file) {
-
-				//Loop through list of distributions
-				foreach ($distros as $distroReleaseFile) {
-
-					//Match was found.
-					if ($distroReleaseFile === $file) {
-
-						// Find distribution
-						$OSDistro = array_search($distroReleaseFile, $distros);
-
-						break 2;
-
-					}
-
-				}
-
-			}
-
-
-
-			return $OSDistro;
-
-		}
+        }
 
         public function getServerMemoryLimit($pretty = false) {
             $memory = $this->getScriptMemoryLimit(false, false);
@@ -466,8 +526,8 @@
         }
 
         public function getTimeCPUBound($pretty = false) {
-						$currentTime = microtime(true);
-						$timeSpent = $currentTime - $this->startTime;
+            $currentTime = microtime(true);
+            $timeSpent = $currentTime - $this->startTime;
 
             $bound = ($timeSpent - $this->nonCPUBoundTime) / $timeSpent * 100;
 
@@ -488,10 +548,10 @@
             return $this->numberOfQueries;
         }
 
-				public function addNumberOfSelects($selects) {
-					$this->numberOfSelects += $selects;
-					return $this->numberOfSelects;
-				}
+        public function addNumberOfSelects($selects) {
+            $this->numberOfSelects += $selects;
+            return $this->numberOfSelects;
+        }
 
         public function addNumberOfCacheHits($hits) {
             $this->numberOfCacheHits += $hits;
@@ -502,28 +562,28 @@
             return $this->numberOfQueries;
         }
 
-				public function getNumberOfNonSelects() {
-					return $this->numberOfQueries - $this->numberOfSelects;
-				}
+        public function getNumberOfNonSelects() {
+            return $this->numberOfQueries - $this->numberOfSelects;
+        }
 
-				public function getNumberOfSelects() {
-						return $this->numberOfSelects;
-				}
+        public function getNumberOfSelects() {
+            return $this->numberOfSelects;
+        }
 
-				public function getCacheEfficiency($pretty = false) {
+        public function getCacheEfficiency($pretty = false) {
 
-					if($this->numberOfCacheHits === 0 || $this->numberOfSelects === 0) {
-						$efficiency = 0;
-					} else {
-						$efficiency = $this->numberOfCacheHits / $this->numberOfSelects * 100;
-					}
+            if($this->numberOfCacheHits === 0 || $this->numberOfSelects === 0) {
+                $efficiency = 0;
+            } else {
+                $efficiency = $this->numberOfCacheHits / $this->numberOfSelects * 100;
+            }
 
-					if($pretty) {
-							return floor($efficiency);
-					} else {
-							return (float)$efficiency;
-					}
-				}
+            if($pretty) {
+                return floor($efficiency);
+            } else {
+                return (float)$efficiency;
+            }
+        }
 
         public function getNumberOfCacheHits($pretty = false) {
             if($this->numberOfQueries) {
@@ -655,4 +715,4 @@
             return round($bytes, $precision) . ' ' . $units[$pow];
         }
 
-	}
+    }

@@ -36,68 +36,22 @@ class AllPage extends \HC\Ajax {
         if(!$auth->checkAccess($GET['code'])) {
             return 401;
         }
-        
-        // Get number of requests
-        $linecountBefore = 0;
-        $handle = fopen('/var/log/nginx/access.log', 'r');
-        while(!feof($handle)){
-            $line = fgets($handle, 4096);
-            $linecountBefore += substr_count($line, PHP_EOL);
-        }
-    
-        fclose($handle);
-        
     
         // Get network packet count
         $tx1 = file_get_contents('/sys/class/net/eth0/statistics/tx_bytes');
         $rx1 = file_get_contents('/sys/class/net/eth0/statistics/rx_bytes');
-    
-        // Get process information
-        $stat1 = file('/proc/stat');
-    
+        
         sleep(1);
-
-        // Get process information
-        $stat2 = file('/proc/stat');
-
+        
         // Get network packet count
         $tx2 = file_get_contents('/sys/class/net/eth0/statistics/tx_bytes');
         $rx2 = file_get_contents('/sys/class/net/eth0/statistics/rx_bytes');
-
-        // Get number of requests
-        $linecountAfter = 0;
-        $handle = fopen('/var/log/nginx/access.log', 'r');
-        while(!feof($handle)){
-            $line = fgets($handle, 4096);
-            $linecountAfter += substr_count($line, PHP_EOL);
-        }
-    
-        fclose($handle);
-    
-        $rps = $linecountAfter - $linecountBefore;
     
         $netTX = $tx2 - $tx1;
         $netRX = $rx2 - $rx1;
     
         $net = ($netTX + $netRX);
     
-        $info1 = explode(' ', preg_replace('!cpu +!', '', $stat1[0]));
-        $info2 = explode(' ', preg_replace('!cpu +!', '', $stat2[0]));
-    
-        $dif = [];
-        $dif['user'] = $info2[0] - $info1[0];
-        $dif['nice'] = $info2[1] - $info1[1];
-        $dif['sys'] = $info2[2] - $info1[2];
-        $dif['idle'] = $info2[3] - $info1[3];
-        $total = array_sum($dif);
-    
-        $cpuA = [];
-        foreach($dif as $x => $y) {
-            $cpuA[$x] = round($y / $total * 100, 1);
-        }
-
-        $cpu = $total - $cpuA['idle'];
-        
         $total = 0;
         $free = 0;
         $fh = fopen('/proc/meminfo', 'r');
@@ -112,19 +66,67 @@ class AllPage extends \HC\Ajax {
         }
         fclose($fh);
 
-        $mem = ($free / $total) * 100;
+        $mem = 100 - ($free / $total) * 100;
+        
+        $output = [];
+        $status = exec('iostat', $output);
     
-        $iowait = (float)exec('iostat -c|awk \'/^ /{print $4}\'');
+        foreach($output as $key => $value) {
+            $output[$key] = preg_replace('/\s+/', ' ', $value);
+        }
+        
+        $iowait = 0;
+        if(isset($output[3])) {
+            $line = explode(' ', $output[3]);
+            if(isset($line[4])) {
+                $iowait = (float)$line[4];
+            }
+        }
+    
+        $tps = 0;
+        if(isset($output[6])) {
+            $line = explode(' ', $output[6]);
+            if(isset($line[1])) {
+                $tps = (float)$line[1];
+            }
+        }
+    
+        $cpu = 0;
+        if(isset($output[3])) {
+            $line = explode(' ', $output[3]);
+            if(isset($line[6])) {
+                $cpu = 100 - (float)$line[6];
+                if($cpu < 0) {
+                    $cpu = 0;
+                }
+            }
+        }
 
         $df = disk_free_space('/');
         $dt = disk_total_space('/');
-        $ds = ($df / $dt) * 100;
-    
-        if($cpu < 0) {
-            $cpu = 0;
+        $ds = 100 - ($df / $dt) * 100;
+
+        $avgRespTime = apc_fetch('HC_APP_STATS_TIME');
+        if(!$avgRespTime) {
+            $avgRespTime = 0;
+        }
+        
+        $avgTimeCpuBound = apc_fetch('HC_APP_STATS_TIME_CPUBOUND');
+        if(!$avgTimeCpuBound) {
+            $avgTimeCpuBound = 0;
+        }
+
+        $qpm = apc_fetch('HC_APP_STATS_QPM');
+        if(!$qpm) {
+            $qpm = 0;
         }
     
-        $this->body = ['status' => 1, 'message' => 'All', 'result' => ['cpu' => $cpu, 'mem' => $mem, 'iow' => $iowait, 'ds' => $ds, 'net' => $net, 'rps' => $rps]];
+        $rpm = apc_fetch('HC_APP_STATS_REQUESTS');
+        if(!$rpm) {
+            $rpm = 0;
+        }
+    
+        $this->body = ['status' => 1, 'message' => 'All', 'result' => ['cpu' => $cpu, 'mem' => $mem, 'iow' => $iowait, 'ds' => $ds, 'net' => $net, 'rpm' => $rpm, 'tps' => $tps, 'avgRespTime' => $avgRespTime, 'qpm' => $qpm, 'avgTimeCpuBound' => $avgTimeCpuBound]];
         return 1;
     }
 }
