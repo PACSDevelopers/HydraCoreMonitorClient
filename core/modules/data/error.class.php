@@ -1,19 +1,19 @@
 <?hh // decl
 	namespace HC;
 
-	/**
-	 * Class Error
-	 * @package HC
-	 */
+    /**
+     * Class Error
+     * @package HC
+     */
 
-	class Error extends Core
+    class Error extends Core
 
-	{
+    {
 
-		// Setup class public variables
+        // Setup class public variables
 
 
-		// Setup class protected variables
+        // Setup class protected variables
         protected $errorTitle = [
             400 => 'Bad Request',
             401 => 'Unauthorized',
@@ -53,9 +53,9 @@
             509 => 'Bandwidth Limit Exceeded',
             510 => 'Not Extended',
             511 => 'Network Authentication Required',
-						'503-2' => 'Deployment In Progress'
+            '503-2' => 'Deployment In Progress'
         ];
-            // Setup the corresponding descriptions
+        // Setup the corresponding descriptions
         protected $errorDescription = [
             400 => 'The request cannot be fulfilled due to bad syntax.',
             401 => 'Similar to 403 Forbidden, but specifically for use when authentication is possible but has failed or not yet been provided.',
@@ -131,329 +131,329 @@
             507 => 'Insufficient Storage',
             509 => 'Bandwidth Limit Exceeded',
             510 => 'Not Extended',
-			'503-2' => 'Deployment In Progress',
+            '503-2' => 'Deployment In Progress',
         ];
 
-		/**
-		 * Constructor
-		 *
-		 */
+        /**
+         * Constructor
+         *
+         */
 
-		public function __construct()
+        public function __construct()
 
-		{
+        {
 
-		}
-
-
-
-		/**
-		 * Getting backtrace
-		 *
-		 * @param string $endLine
-		 * @param int $skip
-		 *
-		 * @return string
-		 */
-
-		public static function getBacktrace($traceArray, $endLine, $skip = 0)
-
-		{
-
-			if (!is_array($traceArray)) {
-
-				return '';
-
-			}
+        }
 
 
 
-			if (!is_string($endLine)) {
+        /**
+         * Getting backtrace
+         *
+         * @param string $endLine
+         * @param int $skip
+         *
+         * @return string
+         */
 
-				return '';
+        public static function getBacktrace($traceArray, $endLine, $skip = 0)
 
-			}
+        {
 
+            if (!is_array($traceArray)) {
 
+                return '';
 
-			if (!is_int($skip)) {
-
-				return '';
-
-			}
-
-
-
-			// Define trace
-			$trace = '';
-
-
-
-			// Get the debug trace, reversed and without the last $skip calls
-			$traceArray = array_slice($traceArray, $skip);
+            }
 
 
 
-			// Loop through the trace
-			foreach ($traceArray as $key => $value) {
+            if (!is_string($endLine)) {
+
+                return '';
+
+            }
+
+
+
+            if (!is_int($skip)) {
+
+                return '';
+
+            }
+
+
+
+            // Define trace
+            $trace = '';
+
+
+
+            // Get the debug trace, reversed and without the last $skip calls
+            $traceArray = array_slice($traceArray, $skip);
+
+
+
+            // Loop through the trace
+            foreach ($traceArray as $key => $value) {
                 $key++;
 
-				// Define the row based on key
-				$row = '[' . ($key) . ']';
+                // Define the row based on key
+                $row = '[' . ($key) . ']';
 
 
 
-				// If we know the file, display
-				if (isset($value['file'])) {
+                // If we know the file, display
+                if (isset($value['file'])) {
 
-					$row .= ' ' . $value['file'];
+                    $row .= ' ' . $value['file'];
 
-				}
-
-
-
-				// If we know the line, display
-				if (isset($value['line'])) {
-
-					$row .= ':' . $value['line'];
-
-				}
+                }
 
 
 
-				// If we know the class, display
-				if (isset($value['class'])) {
+                // If we know the line, display
+                if (isset($value['line'])) {
 
-					$row .= ' ' . $value['class'] . '::';
+                    $row .= ':' . $value['line'];
+
+                }
 
 
 
-					// If we know the function, display without a space as it's within a class
-					if (isset($value['function'])) {
+                // If we know the class, display
+                if (isset($value['class'])) {
 
-						$row .= $value['function'];
+                    $row .= ' ' . $value['class'] . '::';
 
-					}
+
+
+                    // If we know the function, display without a space as it's within a class
+                    if (isset($value['function'])) {
+
+                        $row .= $value['function'];
+
+                    }
+
+                } else {
+
+
+
+                    // If we know the function, display with a space as it's not within a class
+                    if (isset($value['function'])) {
+
+                        $row .= ' ' . $value['function'];
+
+                    }
+
+                }
+
+
+
+                // If we know the arguments
+                if (isset($value['args'])) {
+
+                    // Start the argument row
+                    $row .= '(';
+
+
+
+                    // Figure out how many arguments we have
+                    $count = count($value['args']);
+
+
+
+                    $redactedValues = ['salt', 'password', 'sendGridPass'];
+
+                    // Loop through each argument
+                    foreach ($value['args'] as $argKey => $argValue) {
+
+                        // Check for recursion
+                        if (Error::isRecursive($argValue)) {
+
+                            // Give it recursive value
+                            $row .= '*RECURSION*';
+
+                        } else {
+
+                            // Get the type appropriate string
+                            $exportedValue = var_export($argValue, true);
+
+                            foreach($redactedValues as $value) {
+
+                                if(mb_strpos($exportedValue, $value) !== false) {
+
+                                    $exportedValue = '*REDACTED*';
+
+                                    break;
+
+                                }
+
+                            }
+
+
+
+                            $row .= $exportedValue;
+
+
+
+                        }
+
+                        // If not the last argument, append the separator
+                        if ($count !== ($argKey + 1)) {
+
+                            $row .= ', ';
+
+                        }
+
+                    }
+
+
+
+                    // End the row
+                    $row .= ')';
+
+                }
+
+
+
+                // Append to the trace, encoding html if appropriate
+                if ($endLine == '<br>') {
+
+                    $trace .= <x:frag>{$row}</x:frag> . $endLine . $endLine;
 
 				} else {
 
+                    $trace .= $row . $endLine . $endLine;
 
-
-					// If we know the function, display with a space as it's not within a class
-					if (isset($value['function'])) {
-
-						$row .= ' ' . $value['function'];
-
-					}
-
-				}
+                }
 
 
 
-				// If we know the arguments
-				if (isset($value['args'])) {
-
-					// Start the argument row
-					$row .= '(';
+            }
 
 
 
-					// Figure out how many arguments we have
-					$count = count($value['args']);
+            return $trace;
 
-
-
-					$redactedValues = ['salt', 'password', 'sendGridPass'];
-
-					// Loop through each argument
-					foreach ($value['args'] as $argKey => $argValue) {
-
-						// Check for recursion
-						if (Error::isRecursive($argValue)) {
-
-							// Give it recursive value
-							$row .= '*RECURSION*';
-
-						} else {
-
-							// Get the type appropriate string
-							$exportedValue = var_export($argValue, true);
-
-							foreach($redactedValues as $value) {
-
-								if(mb_strpos($exportedValue, $value) !== false) {
-
-									$exportedValue = '*REDACTED*';
-
-									break;
-
-								}
-
-							}
-
-
-
-							$row .= $exportedValue;
-
-
-
-						}
-
-						// If not the last argument, append the separator
-						if ($count !== ($argKey + 1)) {
-
-							$row .= ', ';
-
-						}
-
-					}
-
-
-
-					// End the row
-					$row .= ')';
-
-				}
-
-
-
-				// Append to the trace, encoding html if appropriate
-				if ($endLine == '<br>') {
-
-					$trace .= <x:frag>{$row}</x:frag> . $endLine . $endLine;
-
-				} else {
-
-					$trace .= $row . $endLine . $endLine;
-
-				}
-
-
-
-			}
-
-
-
-			return $trace;
-
-		}
-
-    protected static function isErrorOfErrorSystem($trace) {
-        foreach($trace as $key => $row) {
-						if(isset($row['file'])) {
-							if(mb_strpos($row['file'], 'error.class.php')) {
-									return true;
-							}
-						}
         }
-        return false;
-    }
 
-		/**
-		 * @param $errno
-		 * @param $errstr
-		 * @param $errfile
-		 * @param $errline
-		 * @param int $skipTrace
-		 * @param array $traceArray
-		 * @param bool $isException
-		 * @return false|null
-		 */
+        protected static function isErrorOfErrorSystem($trace) {
+            foreach($trace as $key => $row) {
+                if(isset($row['file'])) {
+                    if(mb_strpos($row['file'], 'error.class.php')) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
 
-		public static function errorHandler($errno = 1, $errstr = '?', $errfile = '?', $errline = '?', $skipTrace = 0, $traceArray = [], $isException = false, $customError = false)
+        /**
+         * @param $errno
+         * @param $errstr
+         * @param $errfile
+         * @param $errline
+         * @param int $skipTrace
+         * @param array $traceArray
+         * @param bool $isException
+         * @return false|null
+         */
 
-		{
-            
+        public static function errorHandler($errno = 1, $errstr = '?', $errfile = '?', $errline = '?', $skipTrace = 0, $traceArray = [], $isException = false, $customError = false)
+
+        {
+
             if(error_reporting() === 0) {
                 return false;
             }
-			if (defined('ERROR_LOGGING')) {
+            if (defined('ERROR_LOGGING')) {
 
-				if (ERROR_LOGGING === 'NONE') {
+                if (ERROR_LOGGING === 'NONE') {
 
-					return false;
+                    return false;
 
-				}
+                }
 
-			}
+            }
 
-			// Get site settings
-			if(isset($GLOBALS['HC_CORE'])) {
+            // Get site settings
+            if(isset($GLOBALS['HC_CORE'])) {
 
-				if(method_exists($GLOBALS['HC_CORE'], 'getSite')) {
+                if(method_exists($GLOBALS['HC_CORE'], 'getSite')) {
 
-					$site = $GLOBALS['HC_CORE']->getSite();
+                    $site = $GLOBALS['HC_CORE']->getSite();
 
-					if($site instanceof \HC\Site) {
+                    if($site instanceof \HC\Site) {
 
-						$siteSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
+                        $siteSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
 
-			            if(isset($siteSettings)) {
+                        if(isset($siteSettings)) {
 
-			                if (isset($siteSettings['errors'])) {
+                            if (isset($siteSettings['errors'])) {
 
-			                    if (isset($siteSettings['errors']['ignore'])) {
+                                if (isset($siteSettings['errors']['ignore'])) {
 
-			                        if (is_array($siteSettings['errors']['ignore'])) {
+                                    if (is_array($siteSettings['errors']['ignore'])) {
 
-			                            foreach ($siteSettings['errors']['ignore'] as $ignore) {
+                                        foreach ($siteSettings['errors']['ignore'] as $ignore) {
 
-			                                // // Check for ignored errors
-			                                if (mb_strpos($errstr, $ignore) !== false) {
+                                            // // Check for ignored errors
+                                            if (mb_strpos($errstr, $ignore) !== false) {
 
-			                                    return false;
+                                                return false;
 
-			                                }
+                                            }
 
-			                            }
+                                        }
 
-			                        }
+                                    }
 
-			                    }
+                                }
 
-			                }
+                            }
 
-			            }
+                        }
 
-					}
+                    }
 
-				}
+                }
 
-			}
-
-
+            }
 
 
 
 
 
-			// Force number from $skipTrace
-			if (!is_int($skipTrace)) {
-
-				$skipTrace = 1;
-
-			}
 
 
+            // Force number from $skipTrace
+            if (!is_int($skipTrace)) {
 
-			// Make sure we skip shutdown, so no pages are rendered after this
-			$GLOBALS['skipShutdown'] = true;
+                $skipTrace = 1;
+
+            }
 
 
 
-			// Define the output and wrapper
-			$output = '';
-
-			// Define the string to use at the end of every line
-			$endLine = (PHP_SAPI == 'cli') ? PHP_EOL : '<br>';
+            // Make sure we skip shutdown, so no pages are rendered after this
+            $GLOBALS['skipShutdown'] = true;
 
 
 
-			// Define the version of PHP / HHVM
-			$phpVersion = (defined('HHVM_VERSION')) ? PHP_VERSION . ' (HHVM: ' . HHVM_VERSION . ')' : PHP_VERSION;
+            // Define the output and wrapper
+            $output = '';
 
-			// Define operating system
-			$operatingSystem = PHP_OS;
+            // Define the string to use at the end of every line
+            $endLine = (PHP_SAPI == 'cli') ? PHP_EOL : '<br>';
+
+
+
+            // Define the version of PHP / HHVM
+            $phpVersion = (defined('HHVM_VERSION')) ? PHP_VERSION . ' (HHVM: ' . HHVM_VERSION . ')' : PHP_VERSION;
+
+            // Define operating system
+            $operatingSystem = PHP_OS;
             $documentMode = 0;
 
             $isErrorOfErrorSystem = self::isErrorOfErrorSystem($traceArray);
@@ -462,16 +462,16 @@
                 $documentMode = 1;
             }
 
-			if ($operatingSystem === 'Linux') {
+            if ($operatingSystem === 'Linux') {
 
-				$operatingSystem = Site::getLinuxDistro() . ' ' . $operatingSystem;
+                $operatingSystem = Site::getLinuxDistro() . ' ' . $operatingSystem;
 
-			}
+            }
 
-			// Setup details
-			$details = $endLine . $endLine . 'Timestamp: ' . time() . $endLine . 'HydraCore Version: ' . HC_VERSION .
+            // Setup details
+            $details = $endLine . $endLine . 'Timestamp: ' . time() . $endLine . 'HydraCore Version: ' . HC_VERSION .
 
-			$endLine . 'PHP Version: ' . $phpVersion . $endLine . 'OS: ' . $operatingSystem . $endLine;
+                $endLine . 'PHP Version: ' . $phpVersion . $endLine . 'OS: ' . $operatingSystem . $endLine;
 
 
             $output .= self::friendlyErrorType($errno) . $endLine;
@@ -492,63 +492,63 @@
 
 
 
-			$output .= $errline . ' of ' . $errfile . $details;
+            $output .= $errline . ' of ' . $errfile . $details;
 
 
 
-			// Define default trace
-			$trace = '';
+            // Define default trace
+            $trace = '';
 
 
 
-			// If we have a defined stack trace
-			if (empty($traceArray)) {
+            // If we have a defined stack trace
+            if (empty($traceArray)) {
                 // Get the formatted trace string based on the debug backtrace
                 $traceArray = debug_backtrace();
-			}
+            }
 
             if ($traceArray) {
                 $traceFirstLine =  self::getErrorLine($errfile, $errline, $endLine);
                 $trace = $traceFirstLine . Error::getBacktrace($traceArray, $endLine, $skipTrace);
             }
 
-			// Add the trace
-			$output .= $endLine . $trace;
+            // Add the trace
+            $output .= $endLine . $trace;
 
 
 
-			// If we know the environment
-			if (defined('ENVIRONMENT')) {
+            // If we know the environment
+            if (defined('ENVIRONMENT')) {
 
-				// And it's a production environment
-				if (ENVIRONMENT === 'PRODUCTION') {
+                // And it's a production environment
+                if (ENVIRONMENT === 'PRODUCTION') {
 
-					// Encrypt the output
-					$encryption = new Encryption();
+                    // Encrypt the output
+                    $encryption = new Encryption();
 
-					$data = $encryption->encrypt($output, 'HC_ERROR');
+                    $data = $encryption->encrypt($output, 'HC_ERROR');
 
-					// If could be encrypted
-					if ($data) {
+                    // If could be encrypted
+                    if ($data) {
 
-						// Format it
-						$data = chunk_split($data, 50, $endLine);
+                        // Format it
+                        $data = chunk_split($data, 50, $endLine);
 
-						// Add it to output
-						$output = 'Error, information below: ' . $endLine . $endLine . $data;
+                        // Add it to output
+                        $output = 'Error, information below: ' . $endLine . $endLine . $data;
 
-					}
+                    }
 
-				}
+                }
 
-			}
+            }
 
-			// Clean all previous input
-			if (ob_get_length()) {
+            // Clean all previous input
+            if (ob_get_length()) {
 
-				ob_clean();
+                ob_clean();
 
-			}
+            }
 
             $GLOBALS['skipShutdown'] = true;
 
@@ -569,11 +569,15 @@
             }
 
             return true;
-		}
+        }
 
         protected static function getErrorLine($file, $line, $endLine) {
-            $fileLines = file($file);
-            return '[0] ' . $file . ':' . $line . ' ' . $fileLines[$line - 1] . $endLine . $endLine;
+            if(file_exists($file)) {
+                $fileLines = file($file);
+                return '[0] ' . $file . ':' . $line . ' ' . $fileLines[$line - 1] . $endLine . $endLine;
+            } else {
+                return '[0] ' . $file . ':' . $line . ' ' . $endLine . $endLine;
+            }
         }
 
         protected static function friendlyErrorType($type)
@@ -614,20 +618,20 @@
         }
 
         /**
-		 * @param $exception
-		 * @return bool
-		 */
+         * @param $exception
+         * @return bool
+         */
 
-		public static function exceptionHandler($exception, $skipTrace = 0)
+        public static function exceptionHandler($exception, $skipTrace = 0)
 
-		{
+        {
 
-			// Trigger the error handler, based on exception details
-			Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), $skipTrace, $exception->getTrace(), true);
+            // Trigger the error handler, based on exception details
+            Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), $skipTrace, $exception->getTrace(), true);
 
-			return true;
+            return true;
 
-		}
+        }
 
         public static function checkPHPSyntax($file) {
 
@@ -657,35 +661,35 @@
         }
 
 
-		/**
-		 * @param $value
-		 * @return bool
-		 */
+        /**
+         * @param $value
+         * @return bool
+         */
 
-		protected static function isRecursive($value)
+        protected static function isRecursive($value)
 
-		{
+        {
 
-			$dump = print_r($value, true);
+            $dump = print_r($value, true);
 
-			if (mb_strpos($dump, '*RECURSION*') !== false) {
+            if (mb_strpos($dump, '*RECURSION*') !== false) {
 
-				return true;
+                return true;
 
-			}
+            }
 
 
 
-			return false;
+            return false;
 
-		}
+        }
 
         public function generateErrorPage($code = 500, $error = '') {
             if(!isset($this->errorTitle[$code])) {
                 $code = 500;
             }
 
-			$actualCode = \strtok($code, '-');
+            $actualCode = \strtok($code, '-');
 
 
             if(defined('MODE') && MODE === 'API') {
@@ -730,14 +734,14 @@
 
 
             // Clean all previous input
-			if (ob_get_length()) {
+            if (ob_get_length()) {
                 ob_clean();
             }
 
             $GLOBALS['skipShutdown'] = true;
 
             try {
-				echo $errorPage->render();
+                echo $errorPage->render();
             } catch (\Exception $exception) {
                 Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace(), true);
             }
@@ -753,4 +757,4 @@
 
             return true;
         }
-	}
+    }

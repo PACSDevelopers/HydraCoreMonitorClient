@@ -360,26 +360,48 @@
                     $startTime = $siteObject->getStartTime();
                     $responseTime = ($endTime - $startTime);
 
-                    if(apc_exists('HC_APP_STATS_REQUESTS') && apc_exists('HC_APP_STATS_TIME') && apc_exists('HC_APP_STATS_TIME_CPUBOUND') && apc_exists('HC_APP_STATS_QPM')) {
-                        // Increment Average
+                    if(apc_exists('HC_APP_STATS_REQUESTS') && apc_exists('HC_APP_STATS_TIME') && apc_exists('HC_APP_STATS_TIME_CPUBOUND') && apc_exists('HC_APP_STATS_QPM') && apc_exists('HC_APP_STATS_TIMECODE')) {
+                        $timecode = apc_fetch('HC_APP_STATS_TIMECODE');
                         $requests = apc_fetch('HC_APP_STATS_REQUESTS');
                         $avgRespTime = apc_fetch('HC_APP_STATS_TIME');
                         $oldQueries = apc_fetch('HC_APP_STATS_QPM');
                         $avgTimeCPUBound = apc_fetch('HC_APP_STATS_TIME_CPUBOUND');
-                        if($requests && $avgRespTime && ($avgRespTime < 1000)) {
-                            apc_store('HC_APP_STATS_REQUESTS', ($requests + 1));
-                            $newAvgRespTime = (($avgRespTime * $requests) + $responseTime) / ($requests + 1);
-                            apc_store('HC_APP_STATS_TIME', $newAvgRespTime);
-                            $newAvgTimeCPUBound = (($avgTimeCPUBound * $requests) + $timeCPUBound) / ($requests + 1);
-                            apc_store('HC_APP_STATS_TIME_CPUBOUND', $newAvgTimeCPUBound);
-                        }
-                        apc_store('HC_APP_STATS_QPM', ($queries + $oldQueries));
 
+                        if($timecode < (time() - 60)) {
+                            // In range
+
+                            // Calculate new average
+                            $newAvgRespTime = (($avgRespTime * $requests) + $responseTime) / ($requests + 1);
+                            $newAvgTimeCPUBound = (($avgTimeCPUBound * $requests) + $timeCPUBound) / ($requests + 1);
+
+                            // Update the values with new averages / counts
+                            apc_store('HC_APP_STATS_TIME', $newAvgRespTime);
+                            apc_store('HC_APP_STATS_TIME_CPUBOUND', $newAvgTimeCPUBound);
+                            apc_store('HC_APP_STATS_REQUESTS', ($requests + 1));
+                            apc_store('HC_APP_STATS_QPM', ($queries + $oldQueries));
+                        } else {
+                            // Out of range
+
+                            // Store the values as last increment
+                            apc_store('HC_APP_STATS_REQUESTS_LAST', $requests);
+                            apc_store('HC_APP_STATS_TIME_LAST', $avgRespTime);
+                            apc_store('HC_APP_STATS_TIME_CPUBOUND_LAST', $avgTimeCPUBound);
+                            apc_store('HC_APP_STATS_QPM_LAST', $oldQueries);
+                            apc_store('HC_APP_STATS_TIMECODE_LAST', time());
+
+                            // Start values again
+                            apc_store('HC_APP_STATS_REQUESTS', 1);
+                            apc_store('HC_APP_STATS_TIME', $responseTime);
+                            apc_store('HC_APP_STATS_TIME_CPUBOUND', $timeCPUBound);
+                            apc_store('HC_APP_STATS_QPM', $queries);
+                            apc_store('HC_APP_STATS_TIMECODE', time());
+                        }
                     } else {
-                        apc_store('HC_APP_STATS_REQUESTS', 1, 60);
-                        apc_store('HC_APP_STATS_TIME', $responseTime, 60);
-                        apc_store('HC_APP_STATS_TIME_CPUBOUND', $timeCPUBound, 60);
-                        apc_store('HC_APP_STATS_QPM', $queries, 60);
+                        apc_store('HC_APP_STATS_REQUESTS', 1);
+                        apc_store('HC_APP_STATS_TIME', $responseTime);
+                        apc_store('HC_APP_STATS_TIME_CPUBOUND', $timeCPUBound);
+                        apc_store('HC_APP_STATS_QPM', $queries);
+                        apc_store('HC_APP_STATS_TIMECODE', time());
                     }
                 }
             }

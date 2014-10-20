@@ -106,25 +106,35 @@ class AllPage extends \HC\Ajax {
         $dt = disk_total_space('/');
         $ds = 100 - ($df / $dt) * 100;
 
-        $avgRespTime = apc_fetch('HC_APP_STATS_TIME');
-        if(!$avgRespTime) {
-            $avgRespTime = 0;
+        $avgRespTime = 0;
+        $avgTimeCpuBound = 0;
+        $qpm = 0;
+        $rpm = 0;
+    
+        $timecode = apc_fetch('HC_APP_STATS_TIMECODE_LAST');
+        if($timecode && ($timecode < (time() - 60))) {
+            $avgRespTime = apc_fetch('HC_APP_STATS_TIME_LAST');
+            if(!$avgRespTime) {
+                $avgRespTime = 0;
+            }
+
+            $avgTimeCpuBound = apc_fetch('HC_APP_STATS_TIME_CPUBOUND_LAST');
+            if(!$avgTimeCpuBound) {
+                $avgTimeCpuBound = 0;
+            }
+
+            $qpm = apc_fetch('HC_APP_STATS_QPM_LAST');
+            if(!$qpm) {
+                $qpm = 0;
+            }
+
+            $rpm = apc_fetch('HC_APP_STATS_REQUESTS_LAST');
+            if(!$rpm) {
+                $rpm = 0;
+            }
         }
         
-        $avgTimeCpuBound = apc_fetch('HC_APP_STATS_TIME_CPUBOUND');
-        if(!$avgTimeCpuBound) {
-            $avgTimeCpuBound = 0;
-        }
-
-        $qpm = apc_fetch('HC_APP_STATS_QPM');
-        if(!$qpm) {
-            $qpm = 0;
-        }
-    
-        $rpm = apc_fetch('HC_APP_STATS_REQUESTS');
-        if(!$rpm) {
-            $rpm = 0;
-        }
+        
     
         $this->body = ['status' => 1, 'message' => 'All', 'result' => ['cpu' => $cpu, 'mem' => $mem, 'iow' => $iowait, 'ds' => $ds, 'net' => $net, 'rpm' => $rpm, 'tps' => $tps, 'avgRespTime' => $avgRespTime, 'qpm' => $qpm, 'avgTimeCpuBound' => $avgTimeCpuBound]];
         return 1;
