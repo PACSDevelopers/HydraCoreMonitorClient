@@ -112,7 +112,8 @@ class AllPage extends \HC\Ajax {
         $rpm = 0;
     
         $timecode = apc_fetch('HC_APP_STATS_TIMECODE_LAST');
-        if($timecode && ($timecode < (time() - 60))) {
+        $expire = time() - 60;
+        if($timecode && ($timecode > $expire)) {
             $avgRespTime = apc_fetch('HC_APP_STATS_TIME_LAST');
             if(!$avgRespTime) {
                 $avgRespTime = 0;
