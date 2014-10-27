@@ -52,10 +52,10 @@ class DB extends Core
 
 
     static protected $joinTypes = [
-      'I' => 'INNER JOIN',
-      'L' => 'LEFT JOIN',
-      'R' => 'RIGHT JOIN',
-      'J' => 'JOIN'
+        'I' => 'INNER JOIN',
+        'L' => 'LEFT JOIN',
+        'R' => 'RIGHT JOIN',
+        'J' => 'JOIN'
     ];
 
     // Setup Public Functions
@@ -71,11 +71,11 @@ class DB extends Core
 
         // Parse global / local options
         $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
-        
+
         if(!count($globalSettings['database'])) {
             throw new \Exception('Unable to find database settings');
         }
-        
+
         if(!(bool)count(array_filter(array_keys($globalSettings['database']), 'is_string'))) {
             $found = false;
             if(isset($settings['name'])) {
@@ -100,14 +100,21 @@ class DB extends Core
 
         // Parse default options
         $settings = $this->parseOptions($settings, ['name' => false, 'timeout' => 60, 'useCache' => false, 'persistant' => false]);
-
         $this->settings = $settings;
-        $this->connect();
+        
+        $serializedSettings = json_encode($settings);
+        $settingsHash = crc32($serializedSettings);
+        if(isset($GLOBALS['HC_DB_' . $settingsHash . '_CONNECTION'])) {
+            $this->connection = $GLOBALS['HC_DB_' . $settingsHash . '_CONNECTION'];
+        } else {
+            $this->connect();
+            $GLOBALS['HC_DB_' . $settingsHash] = $this->connection;
+        }
 
         if($settings['useCache']) {
             $this->encryption = new \HC\Encryption();
-            $this->uniqueHash = $this->encryption->hash(serialize($settings), ['salt' => 'SQL_CACHE', 'hashlength' => 0]);
             $this->cache = new \HC\Cache();
+            $this->uniqueHash = $this->encryption->hash($serializedSettings, ['salt' => 'SQL_CACHE', 'hashlength' => 0]);
             if($this->cache->exists($this->uniqueHash . 'SHOW_TABLES')) {
                 $this->tables = $this->cache->select($this->uniqueHash . 'SHOW_TABLES');
             } else {
@@ -118,7 +125,7 @@ class DB extends Core
                 }
             }
         }
-
+        
         return true;
     }
 
@@ -153,16 +160,16 @@ class DB extends Core
     }
 
     protected function cleanUpQuery($sql) {
-      if(ENVIRONMENT === 'PRODUCTION') {
-        // Clean up the statement
-        $sql = trim($sql);
-        $lastChar = mb_substr($sql, -1);
-        if($lastChar != ';') {
-            $sql .= ';';
+        if(ENVIRONMENT === 'PRODUCTION') {
+            // Clean up the statement
+            $sql = trim($sql);
+            $lastChar = mb_substr($sql, -1);
+            if($lastChar != ';') {
+                $sql .= ';';
+            }
         }
-      }
 
-      return $sql;
+        return $sql;
     }
 
     /**
@@ -178,20 +185,20 @@ class DB extends Core
         $sql = $this->cleanUpQuery($sql);
 
         // If this is a select
-        $isSelect = $this->isSelect($sql);
+        $isSelect = self::isSelect($sql);
         if($isSelect) {
-          // Check the cache
-          if(!$bypassCache) {
-              if($this->settings['useCache']) {
-                  return $this->cachedQuery($sql, $values, $fetchType);
-              }
-          }
-          $tableModifications = false;
+            // Check the cache
+            if(!$bypassCache) {
+                if($this->settings['useCache']) {
+                    return $this->cachedQuery($sql, $values, $fetchType);
+                }
+            }
+            $tableModifications = false;
         } else {
-          if(!$tableModifications) {
-            // Prepare the table modifications
-            $tableModifications = $this->prepareTableModification($sql);
-          }
+            if(!$tableModifications) {
+                // Prepare the table modifications
+                $tableModifications = $this->prepareTableModification($sql);
+            }
         }
 
         // Run the query
@@ -232,7 +239,7 @@ class DB extends Core
 
         $this->modifyNumberOfQueries(1);
         if($isSelect) {
-          $this->modifyNumberOfSelects(1);
+            $this->modifyNumberOfSelects(1);
         }
 
         $query = null;
@@ -246,15 +253,15 @@ class DB extends Core
     }
 
     public function beginTransaction() {
-      return $this->connection->beginTransaction();
+        return $this->connection->beginTransaction();
     }
 
     public function commit() {
-      return $this->connection->commit();
+        return $this->connection->commit();
     }
 
     public function rollback() {
-      return $this->connection->rollback();
+        return $this->connection->rollback();
     }
 
     private function cachedQuery($sql, $values = [], $fetchType = -1, $skipDataCheck = false)
@@ -314,8 +321,8 @@ class DB extends Core
         return false;
     }
 
-    private function isSelect($sql) {
-      return (bool)preg_match('/SELECT/mi', $sql);
+    public static function isSelect($sql) {
+        return (bool)preg_match('/SELECT/mi', $sql);
     }
 
     private function prepareTableModification($sql) {
@@ -364,18 +371,18 @@ class DB extends Core
     }
 
     public function provideDefaultTableData() {
-      $this->beginTransaction();
-      foreach($this->tables as $actualTable) {
-          $this->query('INSERT INTO `HC_Tables` (name, lastUpdated) VALUES (:tableName, :lastUpdated) ON DUPLICATE KEY UPDATE lastUpdated=:lastUpdated;',
-          [
-              'tableName' => $actualTable[0],
-              'lastUpdated' => 0
-          ], -1, true, true);
-      }
+        $this->beginTransaction();
+        foreach($this->tables as $actualTable) {
+            $this->query('INSERT INTO `HC_Tables` (name, lastUpdated) VALUES (:tableName, :lastUpdated) ON DUPLICATE KEY UPDATE lastUpdated=:lastUpdated;',
+                [
+                    'tableName' => $actualTable[0],
+                    'lastUpdated' => 0
+                ], -1, true, true);
+        }
 
-      $this->commit();
+        $this->commit();
 
-      return true;
+        return true;
     }
 
 
@@ -531,64 +538,64 @@ class DB extends Core
         $sql = 'SELECT ';
         $dataCount = count($data);
         if($dataCount) {
-          $count = 0;
-          foreach($data as $key => $value) {
-            $count++;
-            if(is_int($key)) {
-              $value = explode('.', $value, 2);
-              if(count($value) > 1) {
-                $sql .= '`' . $value[0] . '`.`' . $value[1] . '`';
-              } else {
-                $sql .= '`' . $value[0] . '`';
-              }
-            } else {
-              $key = explode('.', $key, 2);
-              if(count($key) > 1) {
-                $sql .=  '`' . $key[0] . '`.`' . $key[1] . '` as `' . $value . '`';
-              } else {
-                $sql .=  '`' . $key[0] . '` as `' . $value . '`';
-              }
-            }
+            $count = 0;
+            foreach($data as $key => $value) {
+                $count++;
+                if(is_int($key)) {
+                    $value = explode('.', $value, 2);
+                    if(count($value) > 1) {
+                        $sql .= '`' . $value[0] . '`.`' . $value[1] . '`';
+                    } else {
+                        $sql .= '`' . $value[0] . '`';
+                    }
+                } else {
+                    $key = explode('.', $key, 2);
+                    if(count($key) > 1) {
+                        $sql .=  '`' . $key[0] . '`.`' . $key[1] . '` as `' . $value . '`';
+                    } else {
+                        $sql .=  '`' . $key[0] . '` as `' . $value . '`';
+                    }
+                }
 
-            if ($count != $dataCount) {
-                $sql .= ', ';
+                if ($count != $dataCount) {
+                    $sql .= ', ';
+                }
             }
-          }
         } else {
-          $sql .= '*';
+            $sql .= '*';
         }
 
         if(is_array($table)) {
-          $isFirst = true;
-          foreach($table as $key => $value) {
-            if($isFirst) {
-              $sql .= ' FROM `' . $key . '` `' . $value . '`';
-              $isFirst = false;
-            } else {
-              $key = explode('.', $key, 3);
-              if(count($key) === 3) {
-                $sql .= ' ' . self::$joinTypes[$key[0]] . ' `' . $key[2] . '` `' . $key[1] . '` ON (';
-              } else {
-                $sql .= ' ' . self::$joinTypes['J'] . ' `' . $key[1] . '` `' . $key[0] . '` ON (';
-              }
+            $isFirst = true;
+            foreach($table as $key => $value) {
+                if($isFirst) {
+                    $sql .= ' FROM `' . $key . '` `' . $value . '`';
+                    $isFirst = false;
+                } else {
+                    $key = explode('.', $key, 3);
+                    if(count($key) === 3) {
+                        $sql .= ' ' . self::$joinTypes[$key[0]] . ' `' . $key[2] . '` `' . $key[1] . '` ON (';
+                    } else {
+                        $sql .= ' ' . self::$joinTypes['J'] . ' `' . $key[1] . '` `' . $key[0] . '` ON (';
+                    }
 
-              $count = 0;
-              $valueCount = count($value);
-              foreach($value as $key2 => $value2) {
-                $count++;
-                $key2 = explode('.', $key2, 2);
-                $value2 = explode('.', $value2, 2);
-                $sql .= '`' . $key2[0] . '`.`'. $key2[1] . '` = `' . $value2[0] . '`.`'. $value2[1] . '`';
-                if($count != $valueCount) {
-                  $sql .= ' AND ';
+                    $count = 0;
+                    $valueCount = count($value);
+                    foreach($value as $key2 => $value2) {
+                        $count++;
+                        $key2 = explode('.', $key2, 2);
+                        $value2 = explode('.', $value2, 2);
+                        $sql .= '`' . $key2[0] . '`.`'. $key2[1] . '` = `' . $value2[0] . '`.`'. $value2[1] . '`';
+                        if($count != $valueCount) {
+                            $sql .= ' AND ';
+                        }
+                    }
+
+                    $sql .= ')';
                 }
-              }
-
-              $sql .= ')';
             }
-          }
         } else {
-          $sql .= ' FROM `' . $table . '`';
+            $sql .= ' FROM `' . $table . '`';
         }
 
 
@@ -603,9 +610,9 @@ class DB extends Core
                 $count++;
                 $optionKey = explode('.', $optionKey, 2);
                 if(count($optionKey) > 1) {
-                  $optionKey = '`' . $optionKey[0] . '`.`' . $optionKey[1] . '`';
+                    $optionKey = '`' . $optionKey[0] . '`.`' . $optionKey[1] . '`';
                 } else {
-                  $optionKey = '`' . $optionKey[0] . '`';
+                    $optionKey = '`' . $optionKey[0] . '`';
                 }
 
                 if (is_array($optionValue)) {
@@ -627,7 +634,7 @@ class DB extends Core
 
         if(is_int($startLimit) && is_int($endLimit)) {
             if(($startLimit === 0 && $endLimit === 0) || ($startLimit > $endLimit)) {
-              return false;
+                return false;
             }
 
             $sql .= ' LIMIT ' . $startLimit . ',' . $endLimit;
@@ -663,7 +670,6 @@ class DB extends Core
     }
 
     public function updateSiteProperties() {
-      if(ENVIRONMENT !== 'PRODUCTION') {
         $GLOBALS['HC_CORE']->getSite()->addNonCPUBoundTime($this->nonCPUBoundTime);
         $this->nonCPUBoundTime = 0;
         $GLOBALS['HC_CORE']->getSite()->addNumberOfQueries($this->numberOfQueries);
@@ -673,27 +679,22 @@ class DB extends Core
         $GLOBALS['HC_CORE']->getSite()->addNumberOfCacheHits($this->numberOfCacheHits);
         $this->numberOfCacheHits = 0;
         return true;
-      }
-
-      return false;
     }
 
     public function modifyNumberOfQueries($modifier) {
-      if(ENVIRONMENT !== 'PRODUCTION') {
         $this->numberOfQueries = $this->numberOfQueries + $modifier;
-      }
     }
 
     public function modifyNumberOfSelects($modifier) {
-      if(ENVIRONMENT !== 'PRODUCTION') {
         $this->numberOfSelects = $this->numberOfSelects + $modifier;
-      }
     }
 
     public function modifyNumberOfCacheHits($modifier) {
-      if(ENVIRONMENT !== 'PRODUCTION') {
         $this->numberOfCacheHits = $this->numberOfCacheHits + $modifier;
-      }
+    }
+    
+    public function getConnection(){
+        return $this->connection;
     }
 
     /**

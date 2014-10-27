@@ -91,7 +91,7 @@
                     continue;
                 }
                                 
-                $result = $db->query('SELECT `C`.`id`, `C`.`lastRun` FROM `HC_Cron` `C` WHERE `C`.`cronName` = ?;', [$key]);
+                $result = $db->query('SELECT `C`.`id`, `C`.`lastRun` FROM `HC_Cron` `C` WHERE `C`.`title` = ?;', [$key]);
                 if($result) {                    
                     $result = $db->update('HC_Cron', ['id' => $result[0]['id'], 'lastRun' => $result[0]['lastRun']], ['lastRun' => $currentDate]);
                     if($result) {

@@ -363,18 +363,8 @@
         public static function errorHandler($errno = 1, $errstr = '?', $errfile = '?', $errline = '?', $skipTrace = 0, $traceArray = [], $isException = false, $customError = false)
 
         {
-
-            if(error_reporting() === 0) {
-                return false;
-            }
-            if (defined('ERROR_LOGGING')) {
-
-                if (ERROR_LOGGING === 'NONE') {
-
-                    return false;
-
-                }
-
+            if (ERROR_LOGGING === 'NONE' || error_reporting() === 0) {
+                return true;
             }
 
             // Get site settings
@@ -401,7 +391,7 @@
                                             // // Check for ignored errors
                                             if (mb_strpos($errstr, $ignore) !== false) {
 
-                                                return false;
+                                                return true;
 
                                             }
 

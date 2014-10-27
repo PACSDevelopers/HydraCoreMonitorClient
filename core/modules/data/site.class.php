@@ -168,10 +168,6 @@
             // Error Handling
             $this->errorReporting();
 
-            set_error_handler('HC\Error::errorHandler', -1);
-
-            set_exception_handler('HC\Error::exceptionHandler');
-
             // Shutdown handling
             if (defined('REGISTER_SHUTDOWN')) {
 
@@ -249,6 +245,8 @@
                     case 'ALL':
 
                         error_reporting(E_ALL);
+                        set_error_handler('HC\Error::errorHandler', -1);
+                        set_exception_handler('HC\Error::exceptionHandler');
 
                         return true;
 
@@ -257,17 +255,17 @@
                     case 'FATAL':
 
                         error_reporting(E_ERROR | E_PARSE);
-
+                        set_error_handler('HC\Error::errorHandler', -1);
+                        set_exception_handler('HC\Error::exceptionHandler');
 
 
                         return true;
-
-
-
+                    
                     case 'NONE':
 
                         error_reporting(0);
-
+                        set_error_handler('HC\Error::errorHandler', -1);
+                        set_exception_handler('HC\Error::exceptionHandler');
 
 
                         return true;
@@ -369,7 +367,7 @@
                         $expire = (time() - 60);
                         if($timecode > $expire) {
                             // In range
-                                                        
+
                             // Calculate new average
                             $newAvgRespTime = (($avgRespTime * $requests) + $responseTime) / ($requests + 1);
                             $newAvgTimeCPUBound = (($avgTimeCPUBound * $requests) + $timeCPUBound) / ($requests + 1);

@@ -377,7 +377,8 @@
 					}
 
 
-
+                return false;
+                
 				case 'database':
 
 					$result = $this->connection->query('SELECT `cacheValue` FROM `HC_Cache` WHERE `cacheKey` = ?;', [$key], -1, true);
@@ -561,7 +562,6 @@
 
 
 				case 'database':
-
 					return $this->insertKey($key, $value, $overrideTTL);
 
 			}
