@@ -98,10 +98,36 @@
 
 		public function send($to, $subject, $message, $additional = []) {
 
+            if (filter_var($to, FILTER_VALIDATE_EMAIL) === false) {
+
+                // @todo: Return a custom error if fails with error.class.php
+                return false; // Fail email send because not a vail email
+
+            }
+
 			$additional = $this->parseOptions($additional, $this->defaultMailOptions);
 
+            if(!isset($additional['headers'])) {
+                $additional['headers'] = [];
+            }
 
+            if(isset($additional['toName'])) {
+                $additional['headers']['To'] = $additional['toName'] . '<' . $to . '>';
+            } else {
+                $additional['headers']['To'] = $to;
+            }
 
+            $additional['headers']['From'] = $this->settings['defaults']['sentFromAddress'];
+            $additional['headers']['Reply-To'] = $this->settings['defaults']['sentFromAddress'];
+            $additional['headers']['Subject'] = $subject;
+            $additional['headers']['X-Mailer'] = 'HydraCore ' . HC_VERSION;
+            
+            if ($this->settings['emailType'] == 'html') {
+                // Set proper headers
+                $additional['headers']['MIME-Version'] = '1.0';
+                $additional['headers']['Content-type'] = 'text/html; charset=utf-8';
+            }
+            
 			switch($this->settings['mailSystem']) {
 
 				case 'sendGrid':
@@ -151,62 +177,24 @@
 		private function phpMail($to, $subject, $message, $additional = [])
 
 		{
+            $headers = '';
+            foreach($additional['headers'] as $key => $value) {
+                $headers .= $key . ': ' . $value . '\r\n';
+            }
 
+            $message = wordwrap($message, 70, '\r\n');
+            $mail = mail($to, $subject, $message, $headers);
+            
+            if ($mail === true) {
 
+                return true;
 
-			// @todo: finish this off properly
+            } else {
 
+                // @todo: Return a custom error if fails with error.class.php
+                return false;
 
-			$emailType = $this->settings['emailType'];
-
-
-
-			if ($emailType == 'html') {
-
-				// Set proper headers
-			}
-
-
-
-			// @todo: Make this work
-			$headers = $additional['headers'];
-
-			$parameters = $additional['parameters'];
-
-
-
-			if (filter_var($to, FILTER_VALIDATE_EMAIL) === false) {
-
-
-
-				// @todo: Return a custom error if fails with error.class.php
-				return false; // Fail email send because not a vail email
-
-
-			} else {
-
-
-
-				$mail = mail($to, $subject, $message, $headers, $parameters);
-
-
-
-				if ($mail === true) {
-
-					return true;
-
-				} else {
-
-					// @todo: Return a custom error if fails with error.class.php
-					return false;
-
-				}
-
-
-
-			}
-
-
+            }
 
 		}
 
