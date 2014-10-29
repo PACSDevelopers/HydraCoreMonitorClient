@@ -17,5 +17,10 @@
         ],
         'postReceive' => [
             'HC\Hooks\PostReceive\Unlock' => true
+        ],
+        'cron' => [
+            'HCMC\Hooks\Cron\ProcessBackups' => [
+                'microtime' => 60
+            ],
         ]
     ];
