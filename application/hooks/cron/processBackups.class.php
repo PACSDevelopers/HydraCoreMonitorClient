@@ -54,12 +54,40 @@
           echo 'Processing Backups' . PHP_EOL;
           $this->directory = new \HC\Directory();
           
+          // Get available memory
+          $memory = 100000;
+          $fh = fopen('/proc/meminfo','r');
+          while ($line = fgets($fh)) {
+              $pieces = array();
+              if (preg_match('/^MemFree:\s+(\d+)\skB$/', $line, $pieces)) {
+                  $memory = $pieces[1];
+                  break;
+              }
+          }
+          fclose($fh);
+          
+          $memory = floor($memory / 1024 / 2);
+          
+          if($memory < 100) {
+              $memory = 100;
+          }
+          
+          $cores = 2;
+          
+          $output = exec('getconf _NPROCESSORS_ONLN');
+          
+          if(is_numeric($output)) {
+              $output = (int)$output;
+          }
+          
+          $cores = $cores / 2;
+          
           $cwd = getcwd();
           chdir($this->settings['path']);
           
           $backupsDirectory = $this->getLatestBackup();
           if($backupsDirectory){
-              $command = 'innobackupex ' . $this->settings['path'];
+              $command = 'innobackupex --lock-wait-timeout=300 --parallel=' . $cores . ' --use-memory=' . $memory . 'MB ' . $this->settings['path'];
               $output = [];
               exec($command, $output, $returnCode);
               chdir($cwd);
@@ -75,22 +103,19 @@
                           if($old['to_lsn'] === $new['to_lsn']) {
                               $status = $this->directory->delete($newFile);
                               if($status) {
-                                  echo 'Processed Backups Incremental (no change)' . PHP_EOL;
-                                  return true;
-                              } else {
-                                  echo 'Processed Backups Incremental (cleanup failed)' . PHP_EOL;
+                                  echo 'Processed Backups (no change)' . PHP_EOL;
                                   return true;
                               }
                           } else {
                               $latestBackup = $this->getLatestBackup();
                               // Prepare the backup
-                              $command = 'innobackupex --apply-log ' . $this->settings['path'] . '/' . $latestBackup;
+                              $command = 'innobackupex --lock-wait-timeout=300 --parallel=' . $cores . ' --use-memory=' . $memory . 'MB --apply-log ' . $this->settings['path'] . '/' . $latestBackup;
                               $output = [];
                               $line = exec($command, $output, $returnCode);
                               if($returnCode == 0) {
-                                  $command = 'tar -cf - ' . $this->settings['path'] . '/' . $latestBackup . ' | xz -9 -c - > ' . $this->settings['path'] . '/' . $latestBackup . '.tar.xz';
+                                  $command = 'tar -cf - ' . $this->settings['path'] . '/' . $latestBackup . ' | snzip > ' . $this->settings['path'] . '/' . $latestBackup . '.tar.sz';
                                   $output = [];
-                                  exec($command, $output, $returnCode);
+                                  $line = exec($command, $output, $returnCode);
                                   if($returnCode == 0) {
                                       // Delete everything we don't need
                                       $file = file_get_contents($newFile . '/xtrabackup_checkpoints');
@@ -100,36 +125,32 @@
                                               mkdir($newFile);
                                               $status = file_put_contents($newFile . '/xtrabackup_checkpoints', $file);
                                               if($status) {
-                                                  echo 'Processed Backups Incremental' . PHP_EOL;
+                                                  echo 'Processed Backups' . PHP_EOL;
                                                   return true;
                                               }
                                           }
                                       }
-                                  } else {
-                                      var_dump($command, $output, $returnCode);
                                   }
-                              } else {
-                                  var_dump($command, $line, $output, $returnCode);
                               }
                           }
                       }
                   }
               }
           } else {
-              $command = 'innobackupex ' . $this->settings['path'];
+              $command = 'innobackupex --lock-wait-timeout=300 --parallel=' . $cores . ' --use-memory=' . $memory . 'MB ' . $this->settings['path'];
               $output = [];
               exec($command, $output, $returnCode);
               chdir($cwd);
               if($returnCode == 0) {
                   $latestBackup = $this->getLatestBackup();
                   // Prepare the backup
-                  $command = 'innobackupex --apply-log ' . $this->settings['path'] . '/' . $latestBackup;
+                  $command = 'innobackupex --lock-wait-timeout=300 --parallel=' . $cores . ' --use-memory=' . $memory . 'MB --apply-log ' . $this->settings['path'] . '/' . $latestBackup;
                   $output = [];
                   exec($command, $output, $returnCode);
                   if($returnCode == 0) {
-                      $command = 'tar -cf - ' . $this->settings['path'] . '/' . $latestBackup . ' | xz -9 -c - > ' . $this->settings['path'] . '/' . $latestBackup . '.tar.xz';
+                      $command = 'tar -cf - ' . $this->settings['path'] . '/' . $latestBackup . ' | snzip > ' . $this->settings['path'] . '/' . $latestBackup . '.tar.sz';
                       $output = [];
-                      exec($command, $output, $returnCode);
+                      $line = exec($command, $output, $returnCode);
                       if($returnCode == 0) {
                           // Delete everything we don't need
                           $newDir = $this->settings['path'] . '/' . $latestBackup;
