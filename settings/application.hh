@@ -20,7 +20,7 @@
         ],
         'cron' => [
             'HCMC\Hooks\Cron\ProcessBackups' => [
-                'microtime' => 600
+                'microtime' => 3600
             ],
         ]
     ];

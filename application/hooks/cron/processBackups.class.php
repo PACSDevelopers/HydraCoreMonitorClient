@@ -52,6 +52,10 @@
 
       {
           echo 'Processing Backups' . PHP_EOL;
+          if(!is_file(HC_TMP_LOCATION . '/backups/backups.json')) {
+              echo 'Processing Backups (none)' . PHP_EOL;
+          }
+          
           $this->directory = new \HC\Directory();
           
           // Get available memory
