@@ -645,6 +645,10 @@
 			return $this->inputHTML . '</table>' . $this->settings['append'];
 
 		}
+        
+        public function __toString() {
+            return $this->render();
+        }
 
 	}
 

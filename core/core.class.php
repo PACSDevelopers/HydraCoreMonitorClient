@@ -51,13 +51,11 @@
 
 			}
 
-
-
-			if(!headers_sent()) {
-
-				@header('X-Powered-By: HydraCore ' . HC_VERSION);
-
-			}
+            if(!headers_sent() && !defined('HC_SENT_HEADERS')) {
+                @header('X-Powered-By: HydraCore ' . HC_VERSION, false);
+                @header('X-Powered-By: ' . SITE_NAME . ' ' . APP_VERSION, false);
+                define('HC_SENT_HEADERS', true);
+            }
 
 			return true;
 

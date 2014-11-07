@@ -118,11 +118,9 @@
 
 
 
-		public function start($name, $command, $workingDirectory = false) {
+		public function start($name, $command, $workingDirectory = false, $useLog = true) {
 
 			$command = trim($command);
-
-
 
 			// Check if we should check against the file version of process list
 			if(isset($this->processList[$name])) {
@@ -154,10 +152,14 @@
 			    $workingDirectory = $orgWorkingDirectory;
 
 			}
+            
+            if($useLog) {
+                $logLine = $workingDirectory . '/' . $name . '.log';
+            } else {
+                $logLine = '/dev/null';
+            }
 
-
-
-			$this->PID = shell_exec(sprintf('cd ' . $workingDirectory . ' && %s > ' . $workingDirectory . '/' . $name . '.log 2>&1 & echo $!', $command));
+			$this->PID = shell_exec(sprintf('cd ' . $workingDirectory . ' && (sleep 1 && %s) > ' . $logLine . ' 2>&1 & echo $!', $command));
 
 
 
@@ -183,8 +185,6 @@
 
 		    }
 
-
-
 	        return(false);
 
 		}
@@ -207,8 +207,10 @@
 					return $this->updateList();
 
 				}
-
-			}
+                
+			}  else {
+                return true;
+            }
 
 
 
