@@ -73,7 +73,7 @@
             $cwd = getcwd();
             
             chdir(HC_LOCATION);
-            $command = 'cd ' . HC_LOCATION . ' && hhvm /tmp/composer.phar update';
+            $command = 'cd ' . HC_LOCATION . ' && hhvm /tmp/composer.phar update -n';
     
             passthru($command, $returnCode);
     

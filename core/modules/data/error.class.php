@@ -59,6 +59,9 @@
         ];
         // Setup the corresponding descriptions
         protected $errorDescription = [
+            0   => 'Failure',
+            1   => 'Success',
+            200 => 'Success',
             400 => 'The request cannot be fulfilled due to bad syntax.',
             401 => 'Similar to 403 Forbidden, but specifically for use when authentication is possible but has failed or not yet been provided.',
             403 => 'The request was a legal request, but the server is refusing to respond to it.',
@@ -133,7 +136,7 @@
             507 => 'Insufficient Storage',
             509 => 'Bandwidth Limit Exceeded',
             510 => 'Not Extended',
-            '503-2' => 'Deployment In Progress',
+            '503-2' => 'Service Unavailable',
         ];
 
         /**
@@ -699,7 +702,9 @@
             if($errorDescription != '') {
                 $errorDescription = $errorDescription;
             } else {
-                $errorDescription = $this->errorDescription[$code];
+                if(isset($this->errorDescription[$code])) {
+                    $errorDescription = $this->errorDescription[$code];
+                }
             }
             
             if((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') || defined('MODE') && MODE === 'API') {
