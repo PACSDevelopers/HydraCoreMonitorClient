@@ -43,20 +43,7 @@ class Stats extends \HC\Core
         
         return ($netTX + $netRX);
     }
-    
-    public static function updateApt() {
-        $command = '/usr/lib/update-notifier/apt-check --human-readable';
-        $output = [];
-        $line = exec($command, $output, $returnCode);
-        if($returnCode === 0 && isset($output[0])) {
-            if(preg_match('/^\d/', $output[0], $matches)) {
-                if(is_numeric($matches)) {
-                    return $matches;
-                }
-            }
-        }
-    }
-    
+        
     public static function getUpdates() {
         if(is_file('/usr/lib/update-notifier/apt-check')) {
             $command = '/usr/lib/update-notifier/apt-check --human-readable';
@@ -64,8 +51,8 @@ class Stats extends \HC\Core
             $line = exec($command, $output, $returnCode);
             if($returnCode === 0 && isset($output[0])) {
                 if(preg_match('/^\d/', $output[0], $matches)) {
-                    if(is_numeric($matches)) {
-                        return $matches;
+                    if(isset($matches[0]) && is_numeric($matches[0])) {
+                        return $matches[0];
                     }
                 }
             }
@@ -80,8 +67,8 @@ class Stats extends \HC\Core
             $line = exec($command, $output, $returnCode);
             if($returnCode === 0 && isset($output[1])) {
                 if(preg_match('/^\d/', $output[1], $matches)) {
-                    if(is_numeric($matches)) {
-                        return $matches;
+                    if(isset($matches[0]) && is_numeric($matches[0])) {
+                        return $matches[0];
                     }
                 }
             }
