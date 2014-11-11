@@ -71,6 +71,16 @@
 
 		{
 
+            $options = getopt('', 'skip-hook-placement:');
+            if(isset($options['skip-hook-placement'])) {
+                foreach($this->settings as $key => $value) {
+                    unset($this->settings[$key]);
+                    if($key === $options['skip-hook-placement']) {
+                        break;
+                    }
+                }
+            }
+            
 			foreach ($this->settings as $key => $value) {
 
 				$hook = new $key($value);
@@ -79,7 +89,12 @@
 
 					$cwd = getcwd();
 
-					if (!$hook->run()) {
+                    $status = $hook->run();
+                    if($status === -1) {
+                        return true;
+                    }
+                    
+					if (!$status) {
 
 						chdir($cwd);
 

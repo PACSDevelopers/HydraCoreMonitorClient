@@ -215,13 +215,13 @@
 
 
 				// Modules
-        case 'HC\View':
+                case 'HC\View':
+        
+                require_once(HC_CORE_LOCATION . '/modules/data/view.class.php');
+    
+                break;
 
-            require_once(HC_CORE_LOCATION . '/modules/data/view.class.php');
-
-            break;
-
-        case 'HC\Page':
+                case 'HC\Page':
 
 				require_once(HC_CORE_LOCATION . '/modules/data/page.class.php');
 
@@ -232,194 +232,165 @@
 				require_once(HC_CORE_LOCATION . '/modules/data/ajax.class.php');
 
 				break;
-
-				case 'HC\Table':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/table.class.php');
-
-					break;
-
-				case 'HC\Form':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/form.class.php');
-
-					break;
-
-				case 'HC\Button':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/button.class.php');
-
-					break;
-
-				case 'HC\TextArea':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/textarea.class.php');
-
-					break;
-
-				case 'HC\Checkbox':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/checkbox.class.php');
-
-					break;
-
-				case 'HC\Input':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/input.class.php');
-
-					break;
-
-				case 'HC\Select':
-
-					require_once(HC_CORE_LOCATION . '/modules/render/forms/select.class.php');
-
-					break;
-
+                
                 case 'HC\DB':
 
-                    require_once(HC_CORE_LOCATION . '/modules/data/db.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/db.class.php');
 
-                    break;
+                break;
 
                 case 'HC\DB2':
 
-                    require_once(HC_CORE_LOCATION . '/modules/data/db2.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/db2.class.php');
 
-                    break;
+                break;
 
                 case 'HC\DB2\Query':
 
-                    require_once(HC_CORE_LOCATION . '/modules/data/db2/query.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/db2/query.class.php');
 
-                    break;
+                break;
 
 				case 'HC\User':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/user.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/user.class.php');
 
-					break;
+                break;
 
 				case 'HC\Email':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/email.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/email.class.php');
 
-					break;
+                break;
 
 				case 'HC\Encryption':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/encryption.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/encryption.class.php');
 
-					break;
+                break;
 
 				case 'HC\Cache':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/cache.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/cache.class.php');
 
-					break;
+                break;
 
 				case 'HC\Error':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/error.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/error.class.php');
 
-					break;
+                break;
 
 				case 'HC\Upload':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/upload.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/upload.class.php');
 
-					break;
+                break;
 
 				case 'HC\Log':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/log.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/log.class.php');
 
-					break;
+                break;
 
 				case 'HC\Directory':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/directory.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/directory.class.php');
 
-					break;
+                break;
 
 				case 'HC\File':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/file.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/file.class.php');
 
-					break;
+                break;
 
 				case 'HC\Process':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/process.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/process.class.php');
 
-					break;
+                break;
 
 				case 'HC\MVC':
 
-					require_once(HC_CORE_LOCATION . '/modules/system/mvc.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/system/mvc.class.php');
 
-					break;
+                break;
 
 				case 'HC\Compression':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/compression.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/compression.class.php');
 
-					break;
+                break;
 
 				case 'HC\Text':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/text.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/text.class.php');
 
-					break;
+                break;
 
 				case 'HC\Authenticator':
 
-					require_once(HC_CORE_LOCATION . '/modules/data/authenticator.class.php');
+                require_once(HC_CORE_LOCATION . '/modules/data/authenticator.class.php');
 
-					break;
+                break;
 
-			  case 'HC\Intl':
-					require_once(HC_CORE_LOCATION . '/modules/data/intl.class.php');
-
-					break;
+			    case 'HC\Intl':
+                    
+                require_once(HC_CORE_LOCATION . '/modules/data/intl.class.php');
+                
+                break;
 
 
 
 				// Hooks
 				case 'HC\Hooks\PostReceive':
 
-					require_once(HC_CORE_LOCATION . '/hooks/postReceive.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive.class.php');
 
-					break;
+                break;
 
 				case 'HC\Hooks\PostReceive\CompileResources':
 
-					require_once(HC_CORE_LOCATION . '/hooks/postReceive/compileResources.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive/compileResources.class.php');
 
-					break;
+                break;
 
-				case 'HC\Hooks\PostReceive\Unlock':
+                case 'HC\Hooks\PostReceive\UpdateComposer':
 
-					require_once(HC_CORE_LOCATION . '/hooks/postReceive/unlock.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive/updateComposer.class.php');
 
-					break;
+                break;
+                
+                case 'HC\Hooks\PostReceive\Unlock':
+
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive/unlock.class.php');
+
+                break;
+
+                case 'HC\Hooks\PostReceive\GenerateErrorPages':
+
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive/generateErrorPages.class.php');
+
+                break;
 
 				case 'HC\Hooks\PreReceive':
 
-					require_once(HC_CORE_LOCATION . '/hooks/preReceive.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/preReceive.class.php');
 
-					break;
+                break;
 
 				case 'HC\Hooks\PreReceive\Lock':
 
-					require_once(HC_CORE_LOCATION . '/hooks/preReceive/lock.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/preReceive/lock.class.php');
 
-					break;
+                break;
 
                 case 'HC\Hooks\Cron':
 
-                    require_once(HC_CORE_LOCATION . '/hooks/cron.class.php');
+                require_once(HC_CORE_LOCATION . '/hooks/cron.class.php');
 
-                    break;
+                break;
 
 			}
 

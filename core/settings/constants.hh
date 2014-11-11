@@ -40,6 +40,14 @@ if(!defined('ALLOW_ERRORS')) {
     define('ALLOW_ERRORS', false);
 }
 
+if(!defined('ERROR_ADDRESS')) {
+    define('ERROR_ADDRESS', false);
+}
+
+if(!defined('ERROR_ALERTS')) {
+    define('ERROR_ALERTS', false);
+}
+
 if(!defined('REGISTER_SHUTDOWN')) {
     define('REGISTER_SHUTDOWN', true);
 }

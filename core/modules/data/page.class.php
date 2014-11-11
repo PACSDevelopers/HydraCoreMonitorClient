@@ -413,7 +413,7 @@
 		public static function generateResources($viewSettings, $type = 'all')
 
 		{
-			$output = '';
+            $output = <x:frag></x:frag>;
 
 
 
@@ -467,7 +467,7 @@
 
                 case 'js':
 
-					$output .= self::renderJS($resourcePath, $viewSettings);
+                    $output->appendChild(self::renderJS($resourcePath, $viewSettings));
 
 				break;
 
@@ -475,15 +475,15 @@
 
 				case 'css':
 
-					$output .= self::renderCSS($resourcePath, $viewSettings);
+                    $output->appendChild(self::renderCSS($resourcePath, $viewSettings));
 
 				break;
 
                 default:
 
-                    $output .= self::renderCSS($resourcePath, $viewSettings);
+                    $output->appendChild(self::renderCSS($resourcePath, $viewSettings));
 
-                    $output .= self::renderJS($resourcePath, $viewSettings);
+                    $output->appendChild(self::renderJS($resourcePath, $viewSettings));
 
                 break;
 
@@ -499,7 +499,7 @@
 
 		private static function renderCSS($resourcePath, $viewSettings) {
 
-			$output = '';
+			$output = <x:frag></x:frag>;
 
 
 
@@ -513,7 +513,7 @@
 						// Link the resources
 						foreach ($viewSettings[$css] as $row => $value) {
 
-							$output .= '<link rel="stylesheet" type="text/css" href="' . PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . $css . '/' . $row . '.' . $css . '.css">' . PHP_EOL;
+							$output->appendChild(<link rel="stylesheet" type="text/css" href={PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . $css . '/' . $row . '.' . $css . '.css'} />);
 
 						}
 
@@ -533,7 +533,7 @@
 
 		private static function renderJS($resourcePath, $viewSettings) {
 
-			$output = '';
+            $output = <x:frag></x:frag>;
 
 			if (isset($viewSettings['js'])) {
 
@@ -545,13 +545,13 @@
 									if (ENVIRONMENT === 'DEV') {
 
 											// Include un-compiled js for development environments
-											$output .= '<script src="' . PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . '.js/' . $row . '.js"></script>' . PHP_EOL;
+											$output->appendChild(<script src={PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . '.js/' . $row . '.js'}></script>);
 
 											continue;
 
 									}
 
-									$output .= '<script src="' . PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . 'js/' . $row . '.min.js"></script>' . PHP_EOL;
+                                $output->appendChild(<script src={PROTOCOL . '://' . SITE_DOMAIN . $resourcePath . 'js/' . $row . '.min.js'}></script>);
 
 							}
 

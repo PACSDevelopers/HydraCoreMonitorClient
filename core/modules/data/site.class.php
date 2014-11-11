@@ -152,7 +152,7 @@
             }
 
 
-            if(ENVIRONMENT !== 'PRODUCTION') {
+            if(\HC\Site::checkProductionAccess()) {
                 // Setup the data required to get cpu usage
                 $data = getrusage();
                 $this->rUsage = $data["ru_utime.tv_sec"]*1e6+$data["ru_utime.tv_usec"];
@@ -285,8 +285,7 @@
          */
 
         public static function shutDown() {
-
-
+            
             if (isset($GLOBALS['skipShutdown'])) {
 
                 if ($GLOBALS['skipShutdown']) {
@@ -410,6 +409,30 @@
 
         }
 
+        public static function checkProductionAccess() {
+            if(ENVIRONMENT === 'PRODUCTION') {
+                if(isset($_SESSION) && isset($_SESSION['HC_USER_HAS_PRODUCTION_ACCESS'])) {
+                    return true;
+                }
+                
+                if(function_exists('getallheaders') && isset($GLOBALS['HC_CORE'])) {
+                    $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
+                    if(isset($globalSettings['monitor-client']) && isset($globalSettings['monitor-client']['key'])) {
+                        $headers = \getallheaders();
+                        if(isset($headers['X-Hc-Auth-Code'])) {
+                            $authenticator = new \HC\Authenticator();
+                            $authenticator->setCodeLength(9);
+                            if($authenticator->verifyCode($globalSettings['monitor-client']['key'], $headers['X-Hc-Auth-Code'])) {
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                }
+            }
+            
+            return true;
+        }
 
         public static function extendsHydraCore($class) {
 

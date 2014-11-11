@@ -158,52 +158,25 @@
          * @return string
          */
 
-        public static function getBacktrace($traceArray, $endLine, $skip = 0)
+        public static function getBacktrace($traceArray, $skip = 0)
 
         {
 
-            if (!is_array($traceArray)) {
-
-                return '';
-
-            }
-
-
-
-            if (!is_string($endLine)) {
-
-                return '';
-
-            }
-
-
-
-            if (!is_int($skip)) {
-
-                return '';
-
-            }
-
-
-
             // Define trace
-            $trace = '';
-
-
-
+            $trace = [];
+            
+            if (!is_array($traceArray) || !is_int($skip)) {
+                return $trace;
+            }
+            
             // Get the debug trace, reversed and without the last $skip calls
             $traceArray = array_slice($traceArray, $skip);
-
-
-
+            
             // Loop through the trace
             foreach ($traceArray as $key => $value) {
                 $key++;
 
-                // Define the row based on key
-                $row = '[' . ($key) . ']';
-
-
+                $row = '';
 
                 // If we know the file, display
                 if (isset($value['file'])) {
@@ -262,11 +235,9 @@
 
                     // Figure out how many arguments we have
                     $count = count($value['args']);
-
-
-
-                    $redactedValues = ['salt', 'password', 'sendGridPass'];
-
+                    
+                    $redactedValues = ['Salt', 'salt', 'pass', 'Pass', 'password', 'Password', 'key', 'Key'];
+                    
                     // Loop through each argument
                     foreach ($value['args'] as $argKey => $argValue) {
 
@@ -279,7 +250,7 @@
                         } else {
 
                             // Get the type appropriate string
-                            $exportedValue = var_export($argValue, true);
+                            $exportedValue = str_replace('),' . PHP_EOL, ')' . PHP_EOL, var_export($argValue, true));
 
                             foreach($redactedValues as $value) {
 
@@ -303,9 +274,7 @@
 
                         // If not the last argument, append the separator
                         if ($count !== ($argKey + 1)) {
-
                             $row .= ', ';
-
                         }
 
                     }
@@ -319,27 +288,33 @@
 
 
 
-                // Append to the trace, encoding html if appropriate
-                if ($endLine == '<br>') {
-
-                    $trace .= <x:frag>{$row}</x:frag> . $endLine . $endLine;
-
-				} else {
-
-                    $trace .= $row . $endLine . $endLine;
-
-                }
-
-
+                // Append to the trace
+                $trace[] = $row . ';';
 
             }
-
-
-
+            
             return $trace;
 
         }
-
+        
+        protected static function protectArray($array) {
+            $redactedKeys = ['Salt', 'salt', 'pass', 'Pass', 'password', 'Password', 'key', 'Key'];
+            
+            foreach($array as $key => $value) {
+                foreach($redactedKeys as $redactedKey) {
+                    if(mb_strpos($key, $redactedKey) !== false) {
+                        $array[$key] = '*REDACTED*';
+                        break;
+                    }
+                }
+                
+                if(is_array($value)) {
+                    $array[$key] = $value = self::protectArray($value);
+                }
+            }
+            return $array;
+        }
+        
         protected static function isErrorOfErrorSystem($trace) {
             foreach($trace as $key => $row) {
                 if(isset($row['file'])) {
@@ -386,32 +361,13 @@
             $GLOBALS['skipShutdown'] = true;
 
 
-
-            // Define the output and wrapper
-            $output = '';
-
-            // Define the string to use at the end of every line
-            $endLine = (PHP_SAPI == 'cli') ? PHP_EOL : '<br>';
-
-
-
-            // Define the version of PHP / HHVM
-            $phpVersion = (defined('HHVM_VERSION')) ? PHP_VERSION . ' (HHVM: ' . HHVM_VERSION . ')' : PHP_VERSION;
-
-            // Define operating system
-            $operatingSystem = PHP_OS;
-            $documentMode = 0;
-
+            // Determinte if we need to render html, or text
+            $isCLI = (PHP_SAPI == 'cli');
+            
             $isErrorOfErrorSystem = self::isErrorOfErrorSystem($traceArray);
-
-            if($endLine === '<br>' && !$isErrorOfErrorSystem) {
-                $documentMode = 1;
-            }
-
-            if ($operatingSystem === 'Linux') {
-
-                $operatingSystem = Site::getLinuxDistro() . ' ' . $operatingSystem;
-
+            
+            if($isErrorOfErrorSystem) {
+                $isCLI = true;
             }
             
             $errorDesc = self::friendlyErrorType($errno);
@@ -429,13 +385,34 @@
 
 
             $errorDesc .= $errline . ' of ' . $errfile;
-            $output .= $errorDesc;
 
-            $output .= $endLine . $endLine . 'Timestamp: ' . time() . $endLine . 'Hash: ' . crc32(var_export(func_get_args(), true)) . $endLine . 'URL: ' . PROTOCOL . '://' . SITE_DOMAIN . $_SERVER['REQUEST_URI'] . $endLine . 'HydraCore Version: ' . HC_VERSION . $endLine . 'Application Version: ' . APP_VERSION . $endLine . 'PHP Version: ' . $phpVersion . $endLine . 'OS: ' . $operatingSystem . $endLine;
+            $errorDetails = [];
+            
+            $errorDetails['Description'] = $errorDesc;
+            
+            $errorDetails['ID'] = crc32(var_export(func_get_args(), true));
+            
+            if(isset($_SERVER['REQUEST_URI'])) {
+                $errorDetails['URL'] = PROTOCOL . '://' . SITE_DOMAIN . $_SERVER['REQUEST_URI'];
+            } else {
+                $errorDetails['URL'] = PROTOCOL . '://' . SITE_DOMAIN;
+            }
+            
+            $errorDetails['Timestamp'] = time();
+            
+            $errorDetails['HydraCore Version'] = HC_VERSION;
+            
+            $errorDetails['Application Version'] = APP_VERSION;
+            
+            $errorDetails['PHP Version'] = defined('HHVM_VERSION') ? PHP_VERSION . ' (HHVM: ' . HHVM_VERSION . ')' : PHP_VERSION;
+            
+            if(PHP_OS === 'Linux') {
+                $errorDetails['Operating System'] = Site::getLinuxDistro() . ' Linux';
+            } else {
+                $errorDetails['Operating System'] = PHP_OS;
+            }
 
-
-            // Define default trace
-            $trace = '';
+            $errorDetails['Trace'] = [];
             
             // If we have a defined stack trace
             if (empty($traceArray)) {
@@ -444,12 +421,23 @@
             }
 
             if ($traceArray) {
-                $traceFirstLine =  self::getErrorLine($errfile, $errline, $endLine);
-                $trace = $traceFirstLine . Error::getBacktrace($traceArray, $endLine, $skipTrace);
-            }
+                $errorDetails['Trace'] = Error::getBacktrace($traceArray, $skipTrace);
 
-            // Add the trace
-            $output .= $endLine . $trace;
+                $traceFirstLine = self::getErrorLine($errfile, $errline);
+                array_unshift($errorDetails['Trace'], $traceFirstLine);
+            }
+            
+            if(isset($_SESSION)) {
+                $safeSession = self::protectArray($_SESSION);
+                
+                foreach($safeSession as $key => $value) {
+                    if(is_array($value)) {
+                        $safeSession[$key] = json_encode($value, JSON_PRETTY_PRINT);
+                    }
+                }
+                
+                $errorDetails['Session'] = $safeSession;
+            }
 
             if((ERROR_LOGGING === 'ALL') || (ERROR_LOGGING === 'FATAL' && ($errorTypeInteger === E_ERROR || $errorTypeInteger === E_PARSE))) {
                 $logFile = ini_get('hhvm.log.file');
@@ -457,35 +445,79 @@
                     $logFile = '/var/log/hhvm/error.log';
                 }
 
-                file_put_contents($logFile, 'START_ERROR' . PHP_EOL . trim(str_replace('<br>', PHP_EOL, trim($output))) . PHP_EOL . 'END_ERROR' . PHP_EOL, \FILE_APPEND);
+                if(is_file($logFile)) {
+                    if(is_writable($logFile)) {
+                        file_put_contents($logFile, json_encode($errorDetails) . PHP_EOL, \FILE_APPEND);
+                    }
+                } else {
+                    file_put_contents($logFile, json_encode($errorDetails) . PHP_EOL, \FILE_APPEND);
+                }
             }
             
-            // If we know the environment
-            if (defined('ENVIRONMENT')) {
-
-                // And it's a production environment
-                if (ENVIRONMENT === 'PRODUCTION') {
-
-                    // Encrypt the output
-                    $encryption = new Encryption();
-
-                    $data = $encryption->encrypt($output, 'HC_ERROR');
-
-                    // If could be encrypted
-                    if ($data) {
-
-                        // Format it
-                        $data = chunk_split($data, 50, $endLine);
-
-                        // Add it to output
-                        $output = 'Error, information below: ' . $endLine . $endLine . $data;
-
+            if(ENVIRONMENT !== 'DEV' && ERROR_ALERTS && ERROR_ADDRESS) {
+                $data = [];
+                $data['Error Status'] = 500;
+                $data['Error Message'] = 'Internal Server Error';
+                $data['Error Description'] = 'A generic error message, given when no more specific message is suitable.';
+                foreach($errorDetails as $key => $value) {
+                    if(is_array($value)) {
+                        $tempVal = <small></small>;
+                        foreach($value as $key2 => $value2) {
+                            $tempVal->appendChild(<x:frag>[{$key2}]{$value2}<br /></x:frag>);
+                        }
+                        $data['Error Details ' . $key] = $tempVal;
+                    } else {
+                        $data['Error Details ' . $key] = $value;
                     }
+                }
+
+                $tableBody = <tbody></tbody>;
+            
+                foreach($data as $key => $value) {
+                    $tableBody->appendChild(<tr>
+                        <td>{$key}</td>
+                        <td>{$value}</td>
+                    </tr>);
+                }
+                
+                $message = <table style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                {$tableBody}
+                            </table>;
+                
+                $message = $message->__toString();
+                          
+                $mail = new \HC\Email();
+                $mail->send(ERROR_ADDRESS, SITE_DOMAIN . ': ' . 'Failed (500 - Internal Server Error)', $message);
+            }
+
+            if (!\HC\Site::checkProductionAccess()) {
+
+                // Encrypt the output
+                $encryption = new Encryption();
+
+                $data = $errorDetails;
+                unset($data['Timestamp']);
+                
+                $data = $encryption->encrypt(json_encode($data), 'HC_ERROR_' . $errorDetails['Hash']);
+
+                // If could be encrypted
+                if ($data) {
+
+                    // Format it
+                    $data = chunk_split($data, 50, PHP_EOL);
+
+                    $errorDetails = ['ID' => $errorDetails['ID'], 'Timestamp' => $errorDetails['Timestamp'], 'Encrypted Error Information' => <pre>{$data}</pre>];
 
                 }
 
             }
-
+            
             // Clean all previous input
             if (ob_get_length()) {
 
@@ -495,28 +527,27 @@
 
             $GLOBALS['skipShutdown'] = true;
             
-            // Close off the html if needed
-            if ($documentMode === 1) {
+            if ($isCLI) {
+                var_dump($errorDetails);
+            } else {
                 try {
                     // Display output with page
                     $error = new \HC\Error();
-                    $error->generateErrorPage(500, $output);
+                    $error->generateErrorPage(500, $errorDetails);
                 } catch (\Exception $exception) {
                     Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace(), true);
                 }
-            } else {
-                echo $output;
             }
 
             return true;
         }
 
-        protected static function getErrorLine($file, $line, $endLine) {
+        protected static function getErrorLine($file, $line) {
             if(file_exists($file)) {
                 $fileLines = file($file);
-                return '[0] ' . $file . ':' . $line . ' ' . $fileLines[$line - 1] . $endLine . $endLine;
+                return ' ' . $file . ':' . $line . ' ' . trim($fileLines[$line - 1]);
             } else {
-                return '[0] ' . $file . ':' . $line . ' ' . $endLine . $endLine;
+                return ' ' . $file . ':' . $line;
             }
         }
 
@@ -584,7 +615,7 @@
             if($type & E_STRICT) // 2048 //
                 return E_STRICT;
             if($type & E_RECOVERABLE_ERROR) // 4096 //
-                return HC_Recoverable_Error;
+                return E_RECOVERABLE_ERROR;
             if($type & E_DEPRECATED) // 8192 //
                 return E_DEPRECATED;
             if($type & E_USER_DEPRECATED) // 16384 //
@@ -660,7 +691,7 @@
 
         }
 
-        public function generateErrorPage($code = 500, $error = '', $errorDescription = '') {
+        public function generateErrorPage($code = 500, $errorDetails = [], $errorDescription = '', $skips = true, $return = false) {
             if(!isset(self::$errorTitle[$code])) {
                 $code = 500;
             }
@@ -681,7 +712,7 @@
                 ];
                 
                 $errorPage = new \HC\Ajax($pageSettings);
-                $errorPage->body = ['status' => $code, 'message' => self::$errorTitle[$code], 'errorDescription' => str_replace('<br>', ' ', $errorDescription), 'errorDetail' => array_filter(explode('<br>', $error))];
+                $errorPage->body = ['status' => $code, 'message' => self::$errorTitle[$code], 'errorDescription' => $errorDescription, 'errorDetails' => $errorDetails];
             } else {
                 $pageSettings = [
                     'views' => [
@@ -701,13 +732,34 @@
 
                 $errorPage = new \HC\Page($pageSettings);
 
+                $devInfo = '';
+                if($errorDetails) {
+                    
+                    $errorInfo = <div></div>;
+                    
+                    foreach($errorDetails as $key => $value) {
+                        if(is_array($value)) {
+                            $temp = <pre></pre>;
+                            
+                            foreach($value as $key2 => $value2) {
+                                $temp->appendChild(<x:frag>{'[' . $key2 . '] ' . $value2 . PHP_EOL . PHP_EOL}</x:frag>);
+                            }
+                            
+                            $errorInfo->appendChild(<x:frag><span>{$key}: </span>{$temp}<br /></x:frag>);
+                        } else {
+                            $errorInfo->appendChild(<x:frag><span>{$key}: </span>{$value}<br /></x:frag>);
+                        }
+                    }
+
+                    $devInfo = <x:frag><h2>Error Details</h2>{$errorInfo}</x:frag>;
+                }
+                
                 $errorPage->body = <div class="container">
                                         <div class="row">
                                             <h1>Error - {$actualCode} - {self::$errorTitle[$code]}</h1>
                                             <div>
-                                                    <p>{str_replace('<br>', ' ', $errorDescription)}</p>
-                                                    <h2>Error Details</h2>
-                                                    <p>{POTENTIAL_XSS_HOLE($error)}</p>
+                                                    <p>{$errorDescription}</p>
+                                                    {$devInfo}
                                             </div>
                                         </div>
                                     </div>;
@@ -719,19 +771,30 @@
             if (ob_get_length()) {
                 ob_clean();
             }
-
-            $GLOBALS['skipShutdown'] = true;
-
+            
+            if($skips) {
+                $GLOBALS['skipShutdown'] = true;
+            }
+            
             try {
-                echo $errorPage->render();
+                if($return) {
+                    return $errorPage;
+                } else {
+                    echo $errorPage->render();
+                }
             } catch (\Exception $exception) {
                 Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace(), true);
             }
-
-            $GLOBALS['skipRender'] = true;
-
+            
+            if($skips) {
+                $GLOBALS['skipRender'] = true;
+            }
+            
             if(PHP_SAPI !== 'cli') {
                 http_response_code($actualCode);
+                if(isset($errorDetails['ID'])) {
+                    header('x-hc-error: ' . $errorDetails['ID']);
+                }
                 if(isset($this->errorHeaders[$actualCode])) {
                     header($_SERVER['SERVER_PROTOCOL'] . ' ' . $actualCode . ' ' . $this->errorHeaders[$actualCode], true, $actualCode);
                 }

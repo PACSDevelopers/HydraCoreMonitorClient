@@ -51,6 +51,9 @@
 			// Parse default options
 			$this->settings = $this->parseOptions($settings, ['rewrites' => [], 'enabled' => false, 'api' => false]);
 
+            if($this->settings['enabled'] !== true) {
+                return false;
+            }
 
 
 			$this->GET = $_GET;
@@ -77,7 +80,7 @@
 
 					chdir(dirname($path));
 
-                    if(ENVIRONMENT !== 'PRODUCTION') {
+                    if(ENVIRONMENT === 'DEV') {
                         if(!\HC\Error::checkPHPSyntax($path)) {
                             return false;
                         }
@@ -145,30 +148,34 @@
 
 			}
 
-            if(isset($path)) {
-                if(is_file($path)) {
+            if($this->settings['enabled'] === true) {
+                if (isset($path)) {
+                    if (is_file($path)) {
 
-                    if($this->settings['enabled'] === true) {
+                        if ($this->settings['enabled'] === true) {
 
-                        if(isset($class)) {
+                            if (isset($class)) {
 
-                            // @todo: throw exception
-                            \HC\Error::errorHandler(404, 'No HydraCore page was defined, expected: ' . $class, $path, 0);
+                                // @todo: throw exception
+                                \HC\Error::errorHandler(404, 'No HydraCore page was defined, expected: ' . $class, $path, 0);
+                                return false;
+                                
+                            } else {
 
-                        } else {
-
-                            // @todo: throw exception
-                            \HC\Error::errorHandler(404, 'No HydraCore page was defined.', $path, 0);
+                                // @todo: throw exception
+                                \HC\Error::errorHandler(404, 'No HydraCore page was defined.', $path, 0);
+                                return false;
+                            }
 
                         }
 
                     }
-
                 }
-            }
 
-            $error = new \HC\Error();
-            $error->generateErrorPage(404);
+                $error = new \HC\Error();
+                $error->generateErrorPage(404);
+            }
+            
 			return false;
 
 		}

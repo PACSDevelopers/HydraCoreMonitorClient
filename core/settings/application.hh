@@ -7,6 +7,8 @@
             'HC\Hooks\PreReceive\Lock' => true,
         ],
         'postReceive' => [
+            'HC\Hooks\PreReceive\Lock' => true,
+            'HC\Hooks\PostReceive\UpdateComposer' => true,
             'HC\Hooks\PostReceive\CompileResources' => [
                 'languages' => [
                     'js' => true,
@@ -15,6 +17,7 @@
                 ],
                 'path' => '/resources/'
             ],
-            'HC\Hooks\PostReceive\Unlock' => true
+            'HC\Hooks\PostReceive\GenerateErrorPages' => true,
+            'HC\Hooks\PostReceive\Unlock' => true,
         ]
     ];
