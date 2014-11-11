@@ -50,7 +50,7 @@ class Stats extends \HC\Core
             $output = [];
             $line = exec($command, $output, $returnCode);
             if($returnCode === 0 && isset($output[0])) {
-                if(preg_match('/^\d/', $output[0], $matches)) {
+                if(preg_match('/^\d*/', $output[0], $matches)) {
                     if(isset($matches[0]) && is_numeric($matches[0])) {
                         return $matches[0];
                     }
@@ -66,7 +66,7 @@ class Stats extends \HC\Core
             $output = [];
             $line = exec($command, $output, $returnCode);
             if($returnCode === 0 && isset($output[1])) {
-                if(preg_match('/^\d/', $output[1], $matches)) {
+                if(preg_match('/^\d*/', $output[1], $matches)) {
                     if(isset($matches[0]) && is_numeric($matches[0])) {
                         return $matches[0];
                     }
