@@ -87,7 +87,7 @@
               chmod(HC_TMP_LOCATION . '/actions/currentActions.sh', 700);
               
               $output = [];
-              $line = exec('(sleep 5 && bash ' . HC_TMP_LOCATION . '/actions/currentActions.sh >> /tmp/c-cron.log) &', $output, $returnCode);
+              $line = exec('(sleep 5 && bash ' . HC_TMP_LOCATION . '/actions/currentActions.sh) &', $output, $returnCode);
           }
           
           echo 'Processed Actions' . PHP_EOL;
