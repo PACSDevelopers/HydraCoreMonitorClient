@@ -453,8 +453,28 @@
                     file_put_contents($logFile, json_encode($errorDetails) . PHP_EOL, \FILE_APPEND);
                 }
             }
-            
-            if(ENVIRONMENT !== 'DEV' && ERROR_ALERTS && ERROR_ADDRESS) {
+
+            if (!\HC\Site::checkProductionAccess()) {
+
+                // Encrypt the output
+                $encryption = new Encryption();
+
+                $data = $errorDetails;
+                unset($data['Timestamp']);
+                
+                $data = $encryption->encrypt(json_encode($data), 'HC_ERROR_' . $errorDetails['Hash']);
+
+                // If could be encrypted
+                if ($data) {
+
+                    // Format it
+                    $data = chunk_split($data, 50, PHP_EOL);
+
+                    $errorDetails = ['ID' => $errorDetails['ID'], 'Timestamp' => $errorDetails['Timestamp'], 'Encrypted Error Information' => <pre>{$data}</pre>];
+
+                }
+
+            } else if(ENVIRONMENT !== 'DEV' && ERROR_ALERTS && ERROR_ADDRESS) {
                 $data = [];
                 $data['Error Status'] = 500;
                 $data['Error Message'] = 'Internal Server Error';
@@ -494,28 +514,6 @@
                           
                 $mail = new \HC\Email();
                 $mail->send(ERROR_ADDRESS, SITE_DOMAIN . ': ' . 'Failed (500 - Internal Server Error)', $message);
-            }
-
-            if (!\HC\Site::checkProductionAccess()) {
-
-                // Encrypt the output
-                $encryption = new Encryption();
-
-                $data = $errorDetails;
-                unset($data['Timestamp']);
-                
-                $data = $encryption->encrypt(json_encode($data), 'HC_ERROR_' . $errorDetails['Hash']);
-
-                // If could be encrypted
-                if ($data) {
-
-                    // Format it
-                    $data = chunk_split($data, 50, PHP_EOL);
-
-                    $errorDetails = ['ID' => $errorDetails['ID'], 'Timestamp' => $errorDetails['Timestamp'], 'Encrypted Error Information' => <pre>{$data}</pre>];
-
-                }
-
             }
             
             // Clean all previous input
