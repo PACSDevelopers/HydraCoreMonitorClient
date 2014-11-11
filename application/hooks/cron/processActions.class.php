@@ -85,9 +85,8 @@
               $script = '#!/bin/bash' . $newLine . 'export DEBIAN_FRONTEND=noninteractive;' . $newLine . 'rm ' . HC_TMP_LOCATION . '/actions/currentActions.sh;' . $script;
               file_put_contents(HC_TMP_LOCATION . '/actions/currentActions.sh', $script);
               chmod(HC_TMP_LOCATION . '/actions/currentActions.sh', 700);
-              
-              $output = [];
-              $line = exec('(sleep 5 && bash ' . HC_TMP_LOCATION . '/actions/currentActions.sh) &', $output, $returnCode);
+
+              exec('(sleep 5 && bash ' . HC_TMP_LOCATION . '/actions/currentActions.sh) &');
           }
           
           echo 'Processed Actions' . PHP_EOL;
