@@ -13,8 +13,11 @@
 	}
 
 	if (!defined('HC_VERSION')) {
-		require_once '../core/HydraCore.php';
+        require_once __DIR__ . '/../core/HydraCore.php';
 	}
 
+    $cwd = getcwd();
+    chdir(__DIR__);
 	$process = new HC\Hooks\Cron();
 	$process->run();
+    chdir($cwd);

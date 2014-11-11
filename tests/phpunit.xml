@@ -15,18 +15,7 @@
             <file>core/modules/data/email.class.test.php</file>
             <file>core/modules/data/encryption.class.test.php</file>
             <file>core/modules/data/error.class.test.php</file>
-
-            <!-- CORE MODULES RENDER -->
-            <file>core/modules/render/table.class.test.php</file>
-
-            <!-- CORE MODULES RENDER FORMS -->
-            <file>core/modules/render/forms/button.class.test.php</file>
-            <file>core/modules/render/forms/checkbox.class.test.php</file>
-            <file>core/modules/render/forms/form.class.test.php</file>
-            <file>core/modules/render/forms/input.class.test.php</file>
-            <file>core/modules/render/forms/select.class.test.php</file>
-            <file>core/modules/render/forms/textarea.class.test.php</file>
-
+            
             <!-- HOOKS -->
             <file>hooks/pre-receive.test.php</file>
             <file>hooks/post-receive.test.php</file>
