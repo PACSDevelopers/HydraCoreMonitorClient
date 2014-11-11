@@ -31,10 +31,16 @@
                 case 'HCMC\Authenticator':
                     require_once(HC_APPLICATION_LOCATION . '/modules/data/authenticator.class.php');
                     break;
+                case 'HCMC\Stats':
+                    require_once(HC_APPLICATION_LOCATION . '/modules/data/stats.class.php');
+                    break;
 
                 /* Hooks */
                 case 'HCMC\Hooks\Cron\ProcessBackups':
                     require_once(HC_APPLICATION_LOCATION . '/hooks/cron/processBackups.class.php');
+                    break;
+                case 'HCMC\Hooks\Cron\ProcessActions':
+                    require_once(HC_APPLICATION_LOCATION . '/hooks/cron/processActions.class.php');
                     break;
             }
         }

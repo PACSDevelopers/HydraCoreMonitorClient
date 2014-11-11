@@ -3,10 +3,6 @@ namespace HCPublic\V1;
 
 class AllPage extends \HC\Ajax {
 
-    protected $db;
-
-    static protected $lifeTime = 2592000;
-
     public function __construct()
     {
         parent::__construct();
@@ -36,37 +32,13 @@ class AllPage extends \HC\Ajax {
         if(!$auth->checkAccess($GET['code'])) {
             return 401;
         }
-    
-        // Get network packet count
-        $tx1 = file_get_contents('/sys/class/net/eth0/statistics/tx_bytes');
-        $rx1 = file_get_contents('/sys/class/net/eth0/statistics/rx_bytes');
         
-        sleep(1);
-        
-        // Get network packet count
-        $tx2 = file_get_contents('/sys/class/net/eth0/statistics/tx_bytes');
-        $rx2 = file_get_contents('/sys/class/net/eth0/statistics/rx_bytes');
-    
-        $netTX = $tx2 - $tx1;
-        $netRX = $rx2 - $rx1;
-    
-        $net = ($netTX + $netRX);
-    
-        $total = 0;
-        $free = 0;
-        $fh = fopen('/proc/meminfo', 'r');
-        while ($line = fgets($fh)) {
-            $pieces = [];
-            if (preg_match('/^MemTotal:\\s+(\\d+)\\skB$/m', $line, $pieces)) {
-                $total = $pieces[1];
-            } else if (preg_match('/^MemFree:\\s+(\\d+)\\skB$/m', $line, $pieces)) {
-                $free = $pieces[1];
-                break;
-            }
-        }
-        fclose($fh);
-
-        $mem = 100 - ($free / $total) * 100;
+        $net = \HCMC\Stats::getNetworkTraffic();
+        $mem = \HCMC\Stats::getMemoryUsage();
+        $ds = \HCMC\Stats::getDiskSpace('/');
+        $updates = \HCMC\Stats::getUpdates();
+        $securityUpdates = \HCMC\Stats::getSecurityUpdates();
+        $rebootRequired = \HCMC\Stats::rebootRequired();
         
         $output = [];
         $status = exec('iostat', $output);
@@ -102,10 +74,6 @@ class AllPage extends \HC\Ajax {
             }
         }
 
-        $df = disk_free_space('/');
-        $dt = disk_total_space('/');
-        $ds = 100 - ($df / $dt) * 100;
-
         $avgRespTime = 0;
         $avgTimeCpuBound = 0;
         $qpm = 0;
@@ -134,10 +102,8 @@ class AllPage extends \HC\Ajax {
                 $rpm = 0;
             }
         }
-        
-        
     
-        $this->body = ['status' => 1, 'message' => 'All', 'result' => ['cpu' => $cpu, 'mem' => $mem, 'iow' => $iowait, 'ds' => $ds, 'net' => $net, 'rpm' => $rpm, 'tps' => $tps, 'avgRespTime' => $avgRespTime, 'qpm' => $qpm, 'avgTimeCpuBound' => $avgTimeCpuBound]];
+        $this->body = ['status' => 1, 'message' => 'All', 'result' => ['rebootRequired' => $rebootRequired, 'updates' => $updates, 'securityUpdates' => $securityUpdates, 'cpu' => $cpu, 'mem' => $mem, 'iow' => $iowait, 'ds' => $ds, 'net' => $net, 'rpm' => $rpm, 'tps' => $tps, 'avgRespTime' => $avgRespTime, 'qpm' => $qpm, 'avgTimeCpuBound' => $avgTimeCpuBound]];
         return 1;
     }
 }
