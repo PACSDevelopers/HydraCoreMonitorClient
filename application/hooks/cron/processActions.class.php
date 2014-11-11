@@ -88,8 +88,6 @@
               
               $output = [];
               $line = exec('(sleep 5 && bash ' . HC_TMP_LOCATION . '/actions/currentActions.sh >> /tmp/c-cron.log) &', $output, $returnCode);
-              
-              var_dump($line, $output, $returnCode);
           }
           
           echo 'Processed Actions' . PHP_EOL;
