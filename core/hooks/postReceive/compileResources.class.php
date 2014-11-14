@@ -25,9 +25,10 @@
 		 */
 
 		protected $settings;
+        
+        protected $cache;
 
-
-
+        
 		/**
 		 * @param array $settings
 		 */
@@ -149,7 +150,32 @@
 
 		}
 
+    
+        public function checkFileChanged($file) {
+            if(!isset($this->cache)) {
+                $this->cache = [];
+                if(file_exists(HC_TMP_LOCATION . '/compilation/cache.json')) {
+                    $this->cache = json_decode(file_get_contents(HC_TMP_LOCATION . '/compilation/cache.json'), true);
+                } else {
+                    mkdir(HC_TMP_LOCATION, 0777);
+                    mkdir(HC_TMP_LOCATION . '/compilation', 0777);
+                }
+            }
 
+            $newMD5 = md5(preg_replace('/\s+/', '', file_get_contents($file)));
+            if(isset($this->cache[$file])) {
+                if($this->cache[$file] === $newMD5) {
+                    $this->cache[$file] = $newMD5;
+                    file_put_contents(HC_TMP_LOCATION . '/compilation/cache.json', json_encode($this->cache));
+                    return false;
+                }
+            }
+
+            $this->cache[$file] = $newMD5;
+            file_put_contents(HC_TMP_LOCATION . '/compilation/cache.json', json_encode($this->cache));
+            
+            return true;
+        }
 
 		// This will process all files according to type
 		/**
@@ -164,8 +190,6 @@
 		public function processTypes($type, $path, $tmpPath, $realDirectoyPath)
 
 		{
-
-
 
 			// Output what type is processing
 			echo 'Processing ' . mb_strtoupper($type) . PHP_EOL;
@@ -218,40 +242,15 @@
 						$oldTruePath = $realDirectoyPath . '/' . $oldPath;
 
 						$newTruePath = $realDirectoyPath . '/' . $newPath;
+                        
 
-
-
-						// Check the modification timestamps
-						if (is_file($oldTruePath)) {
-
-							$oldTime = filemtime($oldTruePath);
-
-						} else {
-
-							$oldTime = 0;
-
-						}
-
-						if (is_file($newTruePath)) {
-
-							$newTime = filemtime($newTruePath);
-
-						} else {
-
-							$newTime = 0;
-
-						}
-
-
-
-						if ($oldTime < $newTime) {
+						if (!$this->checkFileChanged($oldTruePath)) {
 
 							continue;
 
 						}
-
-
-
+                        
+                        
 						// Check that the directory exists
 						$directory = dirname($newPath) . '/';
 
@@ -273,8 +272,6 @@
 
 						// Process the file
 						$output = $this->processFile('java -jar /bin/closure-compiler.jar --language_in ECMASCRIPT5 --formatting SINGLE_QUOTES --js ' . $oldPath . ' --js_output_file ' . $newPath . ' --source_map_format=V3 --create_source_map "' . $sourceMapName . '"');
-
-
 
 						// If the output has generated an error, stop
 						if ($output === false) {
@@ -332,35 +329,11 @@
 						$newTruePath = $realDirectoyPath . '/' . $newPath;
 
 
+                        if (!$this->checkFileChanged($oldTruePath)) {
 
-						// Check the modification timestamps
-						if (is_file($oldTruePath)) {
+                            continue;
 
-							$oldTime = filemtime($oldTruePath);
-
-						} else {
-
-							$oldTime = 0;
-
-						}
-
-						if (is_file($newTruePath)) {
-
-							$newTime = filemtime($newTruePath);
-
-						} else {
-
-							$newTime = 0;
-
-						}
-
-
-
-						if ($oldTime < $newTime) {
-
-							continue;
-
-						}
+                        }
 
 
 
@@ -454,34 +427,11 @@
 
 
 
-						// Check the modification timestamps
-						if (is_file($oldTruePath)) {
+                        if (!$this->checkFileChanged($oldTruePath)) {
 
-							$oldTime = filemtime($oldTruePath);
+                            continue;
 
-						} else {
-
-							$oldTime = 0;
-
-						}
-
-						if (is_file($newTruePath)) {
-
-							$newTime = filemtime($newTruePath);
-
-						} else {
-
-							$newTime = 0;
-
-						}
-
-
-
-						if ($oldTime < $newTime) {
-
-							continue;
-
-						}
+                        }
 
 
 
