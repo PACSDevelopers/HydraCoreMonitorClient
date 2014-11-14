@@ -73,7 +73,13 @@
             $cwd = getcwd();
             
             chdir(HC_LOCATION);
-            $command = 'cd ' . HC_LOCATION . ' && hhvm /tmp/composer.phar update -n';
+            
+            if(ENVIRONMENT === 'DEV') {
+                $command = 'cd ' . HC_LOCATION . ' && hhvm /tmp/composer.phar update -n';
+            } else {
+                $command = 'cd ' . HC_LOCATION . ' && hhvm /tmp/composer.phar update -n --no-dev';
+            }
+            
     
             passthru($command, $returnCode);
     

@@ -301,21 +301,26 @@
         }
         
         protected static function protectArray($array) {
+            $newArray = [];
+            
             $redactedKeys = ['Salt', 'salt', 'pass', 'Pass', 'password', 'Password', 'key', 'Key'];
             
             foreach($array as $key => $value) {
                 foreach($redactedKeys as $redactedKey) {
                     if(mb_strpos($key, $redactedKey) !== false) {
-                        $array[$key] = '*REDACTED*';
+                        $newArray[$key] = '*REDACTED*';
                         break;
                     }
                 }
                 
                 if(is_array($value)) {
-                    $array[$key] = $value = self::protectArray($value);
+                    $newArray[$key] = $value = self::protectArray($value);
+                } else {
+                    $newArray[$key] = $value;
                 }
             }
-            return $array;
+            
+            return $newArray;
         }
         
         protected static function isErrorOfErrorSystem($trace) {
