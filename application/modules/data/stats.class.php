@@ -6,7 +6,7 @@ class Stats extends \HC\Core
     public static function getDiskSpace($dir = '/') {
         $df = disk_free_space($dir);
         $dt = disk_total_space($dir);        
-        return 100 - ($df / $dt) * 100;
+        return (($dt - $df) / $dt) * 100;
     }
     
     public static function getMemoryUsage() {
@@ -24,7 +24,7 @@ class Stats extends \HC\Core
         }
         fclose($fh);
 
-        return 100 - ($free / $total) * 100;
+        return (($total - $free) / $total) * 100;
     }
     
     public static function getNetworkTraffic() {
