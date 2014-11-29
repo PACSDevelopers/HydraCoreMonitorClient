@@ -304,22 +304,17 @@
 
 
             // Loop through all globals
-            foreach ($GLOBALS as &$global) {
+            foreach ($GLOBALS as $key => $value) {
 
                 // If it's an object
-                if (is_object($global)) {
-                    if(get_class($global) !== 'HC\\Site') {
-                        // Only destruct hydracore objects - or objects that extend hydracore
-                        if ((mb_strpos(get_class($global), 'HC\\') !== false) || (self::extendsHydraCore($global))) {
+                if (is_object($value)) {
+                    // Only destruct the page class - or anything that extends it
+                    if (self::extendsHydraCoreClass($value, 'Page')) {
 
-                            if (method_exists($global, '__destruct')) {
+                        // Call the destructor
+                        $GLOBALS[$key] = null;
+                        unset($GLOBALS[$key]);
 
-                                // Call the destructor
-                                $global->__destruct();
-
-                            }
-
-                        }
                     }
                 }
 
@@ -431,8 +426,25 @@
                     }
                 }
             }
-
+            
             $GLOBALS['skipPostSend'] = true;
+
+            // Loop through all globals
+            foreach ($GLOBALS as $key => $value) {
+
+                // If it's an object
+                if (is_object($value)) {
+                    if(get_class($value) !== 'HC\\Site') {
+                        // Only destruct hydracore objects - or objects that extend hydracore
+                        if (self::extendsHydraCore($value)) {
+                            // Call the destructor
+                            $GLOBALS[$key] = null;
+                            unset($GLOBALS[$key]);
+                        }
+                    }
+                }
+
+            }
 
             return true;
 

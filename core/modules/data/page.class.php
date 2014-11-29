@@ -389,8 +389,6 @@
 
 					flush();
 
-					session_write_close();
-
 
 
 					return true;

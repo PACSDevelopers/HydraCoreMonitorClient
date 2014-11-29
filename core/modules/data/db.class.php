@@ -141,6 +141,7 @@ class DB extends Core
                     \PDO::ATTR_DEFAULT_FETCH_MODE => $this->defaultFetchType,
                     \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . DB_ENCODING
                 ]);
+                
             } catch (\PDOException $exception) {
                 if($this->settings['throwExceptions']) {
                     throw $exception;
@@ -273,7 +274,7 @@ class DB extends Core
     public function isActive() {
         if($this->connection !== null && $this->connection instanceof \PDO) {
             try {
-                $result = $this->query('SELECT CONNECTION_ID();', [], -1, true);
+                $result = $this->connection->query('SELECT CONNECTION_ID();');
                 if($result) {
                     return true;
                 }
@@ -294,9 +295,16 @@ class DB extends Core
         if($this->isActive()) {
             try {
                 $this->connection->exec('KILL CONNECTION_ID();');
+                $this->connection = null;
                 return true;
-            } catch(\Exception $e) {}
+            } catch(\Exception $e) {
+                if($e->getCode() === '70100') {
+                    $this->connection = null;
+                    return true;
+                }
+            }
         } else {
+            $this->connection = null;
             return true;
         }
         
@@ -411,7 +419,7 @@ class DB extends Core
                     $db->query($modification[0], $modification[1], -1, true, true);
                 }
                 $db->commit();
-                $db = null;
+                $db->disconnect();
                 unset($db);
 
                 return true;
@@ -712,7 +720,7 @@ class DB extends Core
     public function __destruct()
     {
         // Unset the connection
-        $this->connection = null;
+        $this->disconnect();
         $this->defaultFetchType = null;
         $this->settings = null;
         $this->updateSiteProperties();
@@ -757,7 +765,7 @@ class DB extends Core
     public function __sleep()
     {
         // Unset the connection
-        $this->connection = null;
+        $this->disconnect();
         $this->updateSiteProperties();
         return ['connection', 'defaultFetchType', 'settings', 'cache', 'encryption', 'uniqueHash', 'tables', 'nonCPUBoundTime', 'numberOfQueries', 'numberOfSelects', 'numberOfCacheHits'];
     }

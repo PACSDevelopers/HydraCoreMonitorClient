@@ -817,7 +817,7 @@
                 $GLOBALS['skipRender'] = true;
             }
             
-            if(PHP_SAPI !== 'cli') {
+            if(PHP_SAPI !== 'cli' && !headers_sent()) {
                 http_response_code($actualCode);
                 if(isset($errorDetails['ID'])) {
                     header('x-hc-error: ' . $errorDetails['ID']);

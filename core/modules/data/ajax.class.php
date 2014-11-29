@@ -46,6 +46,9 @@
         }
 
         public function sendHeader() :void {
-			header('Content-type: application/json');
+            if(!headers_sent()) {
+                header('Content-type: application/json');
+            }
+			
 		}
     }
