@@ -22,15 +22,17 @@
 
         $settings['database'] = [
 
-            'engine'       => 'mysql',
+            'main' => [
+                'engine'       => 'mysql',
 
-            'host'         => '127.0.0.1',
+                'host'         => '127.0.0.1',
 
-            'username'     => 'travis',
+                'username'     => 'travis',
 
-            'password'     => '',
+                'password'     => '',
 
-            'databasename' => 'HydraCore'
+                'databasename' => 'HydraCore'
+            ]
 
         ];
 

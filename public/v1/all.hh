@@ -36,8 +36,9 @@ class AllPage extends \HC\Ajax {
         $net = \HCMC\Stats::getNetworkTraffic();
         $mem = \HCMC\Stats::getMemoryUsage();
         $ds = \HCMC\Stats::getDiskSpace('/');
-        $updates = \HCMC\Stats::getUpdates();
-        $securityUpdates = \HCMC\Stats::getSecurityUpdates();
+        $updateStats = \HCMC\Stats::getUpdatesAndSecurityUpdates();
+        $updates = $updateStats[0];
+        $securityUpdates = $updateStats[1];
         $rebootRequired = \HCMC\Stats::rebootRequired();
         
         $output = [];

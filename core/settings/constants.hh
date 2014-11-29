@@ -68,3 +68,9 @@ if(!defined('ENCODING')) {
 if(!defined('DB_ENCODING')) {
     define('DB_ENCODING', 'utf8mb4');
 }
+
+if(!defined('LOGIN_PAGE')) {
+    define('LOGIN_PAGE', '');
+}
+
+

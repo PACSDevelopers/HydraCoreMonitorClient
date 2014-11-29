@@ -69,7 +69,7 @@ class DB2 extends Core
                 $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, $this->defaultFetchType);
             } catch (\PDOException $exception) {
                 // Trigger the error handler, based on exception details
-                Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace());
+                Error::exceptionHandler($exception);
             }
 
             return true;

@@ -72,43 +72,34 @@ class DB extends Core
         // Parse global / local options
         $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
 
-        if(!count($globalSettings['database'])) {
+        if(empty($globalSettings['database'])) {
             throw new \Exception('Unable to find database settings');
         }
 
-        if(!(bool)count(array_filter(array_keys($globalSettings['database']), 'is_string'))) {
-            $found = false;
-            if(isset($settings['name'])) {
-                foreach($globalSettings['database'] as $database) {
-                    if(isset($database['name']) && ($database['name'] === $settings['name'])) {
-                        $globalSettings['database'] = $database;
-                        $found = true;
-                    }
-                }
-
-                if(!$found) {
-                    throw new \Exception('Unable to find database settings for: ' . $settings['name']);
-                }
+        if(isset($settings['name'])) {
+            if(isset($globalSettings['database'][$settings['name']])) {
+                $globalSettings['database'] = $globalSettings['database'][$settings['name']];
             }
-
-            if(!$found) {
-                $globalSettings['database'] = $globalSettings['database'][0];
+        } else {
+            $globalSettings['database'] = reset($globalSettings['database']);
+            if(!$globalSettings['database']) {
+                throw new \Exception('No database is defined');
             }
         }
 
         $settings = $this->parseOptions($settings, $globalSettings['database']);
 
         // Parse default options
-        $settings = $this->parseOptions($settings, ['name' => false, 'timeout' => 60, 'useCache' => false, 'persistant' => false]);
+        $settings = $this->parseOptions($settings, ['name' => false, 'timeout' => 60, 'useCache' => false, 'persistant' => false, 'throwExceptions' => true, 'engine' => 'mysql']);
         $this->settings = $settings;
         
         $serializedSettings = json_encode($settings);
         $settingsHash = crc32($serializedSettings);
         if(isset($GLOBALS['HC_DB_' . $settingsHash . '_CONNECTION'])) {
-            $this->connection = $GLOBALS['HC_DB_' . $settingsHash . '_CONNECTION'];
+            $this->connection = &$GLOBALS['HC_DB_' . $settingsHash . '_CONNECTION'];
         } else {
             $this->connect();
-            $GLOBALS['HC_DB_' . $settingsHash] = $this->connection;
+            $GLOBALS['HC_DB_' . $settingsHash] = &$this->connection;
         }
 
         if($settings['useCache']) {
@@ -135,24 +126,36 @@ class DB extends Core
      */
     public function connect()
     {
-        if ($this->connection === null) {
-            if (!isset($this->settings['engine'])) {
-                throw new \Exception('You must select a database driver');
-            }
-
+        if (!$this->isActive()) {
             try {
+                $dsn  = $this->settings['engine'];
+                $dsn .= ':dbname=' . $this->settings['databasename'];
+                $dsn .=';host=' . $this->settings['host'];
+                    
+                    
                 // Create connection from settings defined
-                $this->connection = new \PDO($this->settings['engine'] . ':dbname=' . $this->settings['databasename'] . ';host=' . $this->settings['host'], $this->settings['username'], $this->settings['password']);
-                $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
-                $this->connection->setAttribute(\PDO::ATTR_TIMEOUT, $this->settings['timeout']);
-                $this->connection->setAttribute(\PDO::ATTR_PERSISTENT, $this->settings['persistant']);
-                $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, $this->defaultFetchType);
-                $this->connection->setAttribute(\PDO::MYSQL_ATTR_INIT_COMMAND, 'SET NAMES ' . DB_ENCODING);
+                $this->connection = new \PDO($dsn, $this->settings['username'], $this->settings['password'], [
+                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+                    \PDO::ATTR_TIMEOUT => $this->settings['timeout'],
+                    \PDO::ATTR_PERSISTENT => $this->settings['persistant'],
+                    \PDO::ATTR_DEFAULT_FETCH_MODE => $this->defaultFetchType,
+                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . DB_ENCODING
+                ]);
             } catch (\PDOException $exception) {
-                // Trigger the error handler, based on exception details
-                Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace());
+                if($this->settings['throwExceptions']) {
+                    throw $exception;
+                } else {
+                    Error::exceptionHandler($exception);
+                }
             }
 
+            if(!$this->isActive()) {
+                if($this->settings['throwExceptions']) {
+                    throw new \Exception('Unable to connect to database.');
+                } else {
+                    Error::exceptionHandler(new \Exception('Unable to connect to database.'));
+                }
+            }
             return true;
         }
 
@@ -180,26 +183,37 @@ class DB extends Core
      * @return false|array
      * @throws \Exception
      */
-    public function query($sql, $values = [], $fetchType = -1, $bypassCache = false, $tableModifications = false) {
+    public function query($sql, $values = [], $fetchType = -1, $bypassCache = false, $tableModifications = false, $attempts = 0, $exception = false) {
+        if($attempts > 3 && $exception) {
+            if($this->settings['throwExceptions']) {
+                throw $exception;
+            } else {
+                Error::exceptionHandler($exception);
+                return false;
+            }
+        }
+        
+        if($this->connection === null) {
+            $this->connect();
+        }
+        
         // Clean up the query
         $sql = $this->cleanUpQuery($sql);
 
-        // If this is a select
         $isSelect = self::isSelect($sql);
-        if($isSelect) {
-            // Check the cache
-            if(!$bypassCache) {
-                if($this->settings['useCache']) {
-                    return $this->cachedQuery($sql, $values, $fetchType);
-                }
-            }
-            $tableModifications = false;
-        } else {
-            if(!$tableModifications) {
+        
+        if($this->settings['useCache']) {
+            // If this is a select
+            if($isSelect && !$bypassCache) {
+                return $this->cachedQuery($sql, $values, $fetchType);
+            } else if(!$tableModifications) {
                 // Prepare the table modifications
                 $tableModifications = $this->prepareTableModification($sql);
+            } else {
+                $tableModifications = false;
             }
         }
+        
 
         // Run the query
         try {
@@ -208,8 +222,13 @@ class DB extends Core
             $success = $query->execute($values);
             $this->nonCPUBoundTime += (microtime(true) - $timeBefore);
         } catch (\PDOException $exception) {
-            // Trigger the error handler, based on exception details
-            Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace());
+            if($this->isActive()) {
+                throw $exception;
+            } else {
+                $query = null;
+                $this->reconnect();
+                return $this->query($sql, $values, $fetchType, $bypassCache, $tableModifications, $attempts, $exception);
+            }
         }
 
         // If we have any table modifications, run them
@@ -231,6 +250,8 @@ class DB extends Core
             // There was no rows, use status values
         }
 
+        $query = null;
+
         if (!is_array($result)) {
             if (isset($success)) {
                 $result = $success;
@@ -242,9 +263,6 @@ class DB extends Core
             $this->modifyNumberOfSelects(1);
         }
 
-        $query = null;
-        unset($query);
-
         if (empty($result)) {
             return false;
         }
@@ -252,6 +270,39 @@ class DB extends Core
         return $result;
     }
 
+    public function isActive() {
+        if($this->connection !== null && $this->connection instanceof \PDO) {
+            try {
+                $result = $this->query('SELECT CONNECTION_ID();', [], -1, true);
+                if($result) {
+                    return true;
+                }
+            } catch(\Exception $e) {}
+            
+            $this->connection = null;
+        }
+        
+        return false;
+    }
+    
+    public function reconnect() {
+        $this->disconnect();
+        return $this->connect();
+    }
+    
+    public function disconnect() {
+        if($this->isActive()) {
+            try {
+                $this->connection->exec('KILL CONNECTION_ID();');
+                return true;
+            } catch(\Exception $e) {}
+        } else {
+            return true;
+        }
+        
+        return false;
+    }
+    
     public function beginTransaction() {
         return $this->connection->beginTransaction();
     }
@@ -322,7 +373,7 @@ class DB extends Core
     }
 
     public static function isSelect($sql) {
-        return (bool)preg_match('/SELECT/mi', $sql);
+        return (stripos($sql, 'SELECT') !== false);
     }
 
     private function prepareTableModification($sql) {
@@ -401,8 +452,11 @@ class DB extends Core
         try {
             $this->connection->setAttribute(\PDO::ATTR_DEFAULT_FETCH_MODE, $this->defaultFetchType);
         } catch (\PDOException $exception) {
-            // Trigger the error handler, based on exception details
-            Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace());
+            if($this->settings['throwExceptions']) {
+                throw $exception;
+            } else {
+                Error::exceptionHandler($exception);
+            }
         }
 
         return true;

@@ -1,4 +1,6 @@
 <?hh
+    $hydraCoreSettings['pages'] = [];
+
     /**
      * Hooks
      */
@@ -9,6 +11,7 @@
         'postReceive' => [
             'HC\Hooks\PreReceive\Lock' => true,
             'HC\Hooks\PostReceive\UpdateComposer' => true,
+            'HC\Hooks\PostReceive\UpdateBower' => true,
             'HC\Hooks\PostReceive\CompileResources' => [
                 'languages' => [
                     'js' => true,

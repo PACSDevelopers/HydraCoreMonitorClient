@@ -63,7 +63,7 @@
 
 		{
             $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
-            if(!count($globalSettings['database'])) {
+            if(empty($globalSettings['database'])) {
                 return $this->offlineRun();
             } else {
                 return $this->onlineRun();

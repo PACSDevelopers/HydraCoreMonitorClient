@@ -361,6 +361,12 @@
                 require_once(HC_CORE_LOCATION . '/hooks/postReceive/updateComposer.class.php');
 
                 break;
+
+                case 'HC\Hooks\PostReceive\UpdateBower':
+
+                require_once(HC_CORE_LOCATION . '/hooks/postReceive/updateBower.class.php');
+
+                break;
                 
                 case 'HC\Hooks\PostReceive\Unlock':
 

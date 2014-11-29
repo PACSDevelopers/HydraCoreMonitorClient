@@ -159,7 +159,9 @@
 
 					if (!isset($_SESSION['user'])) {
 
-						header('Location: ' . PROTOCOL . '://' . SITE_DOMAIN);
+                        $_SESSION['desiredLoginPage'] = PROTOCOL . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+                        
+						header('Location: ' . PROTOCOL . '://' . SITE_DOMAIN . '/' . LOGIN_PAGE);
 
 						exit();
 
@@ -246,7 +248,7 @@
                                                                 </html>
                                                         </x:doctype>;
 											}	catch (\Exception $exception) {
-												Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 2, $exception->getTrace(), true);
+                                                Error::exceptionHandler($exception);
 												return true;
 											}
 										}
@@ -403,16 +405,67 @@
 
 		}
 
+        /**
+         * @param  string [][] $viewSettings
+         * @return string
+         */
+
+        public static function generateComponents($additional = [], $type = 'all')
+
+        {
+            $output = <x:frag></x:frag>;
+            
+            $siteSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
+            if($type === 'all' || $type === 'css') {
+                if (isset($siteSettings['pages'])) {
+                    if (isset($siteSettings['pages']['components'])) {
+                        if (isset($siteSettings['pages']['components']['css'])) {
+                            foreach($siteSettings['pages']['components']['css'] as $css) {
+                                $output->appendChild(<link rel="stylesheet" type="text/css" href={PROTOCOL . '://' . SITE_DOMAIN . $css} />);
+                            }
+                        }
+                    }
+                }
+
+                if(isset($additional['css'])) {
+                    foreach($additional['css'] as $css) {
+                        $output->appendChild(<link rel="stylesheet" type="text/css" href={PROTOCOL . '://' . SITE_DOMAIN . $css} />);
+                    }
+                }
+            }
+            
+            if($type === 'all' || $type === 'js') {
+                if (isset($siteSettings['pages'])) {
+                    if (isset($siteSettings['pages']['components'])) {
+                        if (isset($siteSettings['pages']['components']['js'])) {
+                            foreach($siteSettings['pages']['components']['js'] as $js) {
+                                $output->appendChild(<script src={PROTOCOL . '://' . SITE_DOMAIN .  $js}></script>);
+                            }
+                        }
+                    }
+                }
+
+                if(isset($additional['js'])) {
+                    foreach($additional['js'] as $js) {
+                        $output->appendChild(<script src={PROTOCOL . '://' . SITE_DOMAIN .  $js}></script>);
+                    }
+                }
+            }
+            
+			return $output;
+
+		}
 
 
-		/**
-		 * @param  string [][] $viewSettings
-		 * @return string
-		 */
 
-		public static function generateResources($viewSettings, $type = 'all')
+        /**
+         * @param  string [][] $viewSettings
+         * @return string
+         */
 
-		{
+        public static function generateResources($viewSettings, $type = 'all')
+
+        {
             $output = <x:frag></x:frag>;
 
 
@@ -422,46 +475,40 @@
 
 			if (isset($siteSettings['compilation'])) {
 
-				if (isset($siteSettings['compilation']['path'])) {
+                if (isset($siteSettings['compilation']['path'])) {
 
-					$resourcePath = $siteSettings['compilation']['path'];
+                    $resourcePath = $siteSettings['compilation']['path'];
 
-				} else {
+                } else {
 
-					$resourcePath = '/resources/';
+                    $resourcePath = '/resources/';
 
-				}
+                }
 
-			} else {
+            } else {
 
-				$resourcePath = '/resources/';
+                $resourcePath = '/resources/';
 
-			}
+            }
 
 
 
+            $viewSettings = Core::parseOptions($viewSettings, ['scss' => [], 'less' => [], 'js' => []]);
+            
 			// Exclude settings we no longer need
 			if (isset($siteSettings['pages'])) {
 
-				if (isset($siteSettings['pages']['resources'])) {
-
-					$siteSettings = $siteSettings['pages']['resources'];
-
-				}
-
-			}
+                if (isset($siteSettings['pages']['resources'])) {
+                    // Parse the view settings based on default
+                    $siteSettingsResources = Core::parseOptions($siteSettings['pages']['resources'], ['scss' => [], 'less' => [], 'js' => []]);
 
 
-
-			// Parse the view settings based on default
-			$siteSettings = Core::parseOptions($siteSettings, ['scss' => [], 'less' => [], 'js' => []]);
-
-
-
-			// Parse the view settings based on site settings
-			$viewSettings = Core::parseOptions($viewSettings, $siteSettings);
-
-
+                    // Parse the view settings based on site settings
+                    $viewSettings = Core::parseOptions($viewSettings, $siteSettingsResources);
+                }
+                
+            }
+            
 
 			switch($type) {
 
@@ -469,15 +516,15 @@
 
                     $output->appendChild(self::renderJS($resourcePath, $viewSettings));
 
-				break;
+                    break;
 
 
 
-				case 'css':
+                case 'css':
 
                     $output->appendChild(self::renderCSS($resourcePath, $viewSettings));
 
-				break;
+                    break;
 
                 default:
 
@@ -485,9 +532,9 @@
 
                     $output->appendChild(self::renderJS($resourcePath, $viewSettings));
 
-                break;
+                    break;
 
-			}
+            }
 
 
 

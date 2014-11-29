@@ -59,7 +59,7 @@ class Stats extends \HC\Core
         }
         return 0;
     }
-    
+
     public static function getSecurityUpdates() {
         if(is_file('/usr/lib/update-notifier/apt-check')) {
             $command = '/usr/lib/update-notifier/apt-check --human-readable';
@@ -74,6 +74,33 @@ class Stats extends \HC\Core
             }
         }
         return 0;
+    }
+
+    public static function getUpdatesAndSecurityUpdates() {
+        $result = [0, 0];
+        
+        if(is_file('/usr/lib/update-notifier/apt-check')) {
+            $command = '/usr/lib/update-notifier/apt-check --human-readable';
+            $output = [];
+            $line = exec($command, $output, $returnCode);
+            if($returnCode === 0 && isset($output[0]) & isset($output[1])) {
+                $matches = [];
+                if(preg_match('/^\d*/', $output[0], $matches)) {
+                    if(isset($matches[0]) && is_numeric($matches[0])) {
+                        $result[0] = $matches[0];
+                    }
+                }
+
+                $matches = [];
+                if(preg_match('/^\d*/', $output[1], $matches)) {
+                    if(isset($matches[0]) && is_numeric($matches[0])) {
+                        $result[1] = $matches[0];
+                    }
+                }
+            }
+        }
+        
+        return $result;
     }
     
     public static function rebootRequired() {

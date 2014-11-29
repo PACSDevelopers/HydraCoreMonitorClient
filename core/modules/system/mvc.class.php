@@ -130,7 +130,7 @@
                   return true;
 								} catch (\Exception $exception) {
 									// Trigger the error handler, based on exception details
-									Error::errorHandler($exception->getCode(), $exception->getMessage(), $exception->getFile(), $exception->getLine(), 0, $exception->getTrace(), true);
+                                    Error::exceptionHandler($exception);
                   return true;
 								}
 							}

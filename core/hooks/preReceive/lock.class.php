@@ -106,6 +106,7 @@
                 }
                 
                 $lockFile = file_put_contents(HC_LOCATION . '/lock.json', json_encode($data));
+                chmod(HC_LOCATION . '/lock.json', 0777);
 
 				if ($lockFile !== false) {
 
