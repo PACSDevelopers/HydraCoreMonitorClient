@@ -112,7 +112,7 @@
                                         $status = $page->init($this->GET, $this->POST);
                                     }
 
-									if($status === 307 || $status === 302 || $status === 301) {
+                                    if($status === 301 || $status === 302 || $status === 307) {
 										$page->setRendered(true);
 										$page = null;
 										unset($page);

@@ -335,7 +335,7 @@
                         }
 
                         header('Pragma: public', true);
-                        header('Content-Length: ' . mb_strlen($contents), true);
+                        header('Content-Length: ' . strlen($contents), true);
                         header('ETag: '. $md5, true);
                         header_remove('cache-control');
                         header_remove('expires');
