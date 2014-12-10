@@ -69,10 +69,10 @@
 
           if(file_exists(HC_TMP_LOCATION . '/actions/rebootRequested')) {
               $haveAction = true;
-              $script .= $newLine . 'service nginx stop';
-              $script .= $newLine . 'service hhvm stop';
-              $script .= $newLine . 'service mysql stop';
-              $script .= $newLine . 'reboot';
+              $script .= $newLine . '/usr/sbin/service nginx stop';
+              $script .= $newLine . '/usr/sbin/service hhvm stop';
+              $script .= $newLine . '/usr/sbin/service mysql stop';
+              $script .= $newLine . '/sbin/reboot';
               unlink(HC_TMP_LOCATION . '/actions/rebootRequested');
               
               if(file_exists(HC_TMP_LOCATION . '/actions/restartRequested')) {
@@ -80,12 +80,12 @@
               }
           } else if(file_exists(HC_TMP_LOCATION . '/actions/restartRequested')) {
               $haveAction = true;
-              $script .= $newLine . 'service nginx stop';
-              $script .= $newLine . 'service hhvm stop';
-              $script .= $newLine . 'service mysql stop';
-              $script .= $newLine . 'service mysql start';
-              $script .= $newLine . 'service hhvm start';
-              $script .= $newLine . 'service nginx start';
+              $script .= $newLine . '/usr/sbin/service nginx stop';
+              $script .= $newLine . '/usr/sbin/service hhvm stop';
+              $script .= $newLine . '/usr/sbin/service mysql stop';
+              $script .= $newLine . '/usr/sbin/service mysql start';
+              $script .= $newLine . '/usr/sbin/service hhvm start';
+              $script .= $newLine . '/usr/sbin/service nginx start';
               unlink(HC_TMP_LOCATION . '/actions/restartRequested');
           }
           
