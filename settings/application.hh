@@ -16,6 +16,8 @@
             'HC\Hooks\PreReceive\Lock' => true,
         ],
         'postReceive' => [
+            'HC\Hooks\PostReceive\UpdateComposer' => true,
+            'HC\Hooks\PostReceive\UpdateBower' => true,
             'HC\Hooks\PostReceive\Unlock' => true
         ],
         'cron' => [
