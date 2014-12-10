@@ -159,10 +159,11 @@
 
 					if (!isset($_SESSION['user'])) {
 
-                        $_SESSION['desiredLoginPage'] = PROTOCOL . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-                        
-						header('Location: ' . PROTOCOL . '://' . SITE_DOMAIN . '/' . LOGIN_PAGE);
+                        if(!$this->isAJAX) {
+                            header('Location: ' . PROTOCOL . '://' . SITE_DOMAIN . '/' . LOGIN_PAGE);
+                        }
 
+                        $_SESSION['desiredLoginPage'] = PROTOCOL . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
 						exit();
 
 					}
@@ -223,39 +224,39 @@
                 }
 
                 if (isset($this->settings['views'])) {
-										if($this->isAJAX) {
-											$page = $this->body;
-										} else {
-											try {
-												$body = <x:frag></x:frag>;
-												$header = <x:frag></x:frag>;
+                    if($this->isAJAX) {
+                        $page = $this->body;
+                    } else {
+                        try {
+                            $body = <x:frag></x:frag>;
+                            $header = <x:frag></x:frag>;
 
-												foreach ($this->settings['views'] as $row => $value) {
-														if ($value) {
-																if($row === 'header') {
-																		$header = $this->getView($row, $value);
-																} else {
-																		// Render default view that was defined
-																		$body->appendChild($this->getView($row, $value));
-																}
-														}
-												}
+                            foreach ($this->settings['views'] as $row => $value) {
+                                    if ($value) {
+                                            if($row === 'header') {
+                                                    $header = $this->getView($row, $value);
+                                            } else {
+                                                    // Render default view that was defined
+                                                    $body->appendChild($this->getView($row, $value));
+                                            }
+                                    }
+                            }
 
-												$page = <x:doctype>
-                                                                <html>
-                                                                        <head>{$header}</head>
-                                                                        <body>{$body}</body>
-                                                                </html>
-                                                        </x:doctype>;
-											}	catch (\Exception $exception) {
-                                                Error::exceptionHandler($exception);
-												return true;
-											}
-										}
+                            $page = <x:doctype>
+                                            <html>
+                                                    <head>{$header}</head>
+                                                    <body>{$body}</body>
+                                            </html>
+                                    </x:doctype>;
+                        }	catch (\Exception $exception) {
+                            Error::exceptionHandler($exception);
+                            return true;
+                        }
+                    }
 
-										$this->sendHeader();
+                    $this->sendHeader();
 
-										$this->rendered = true;
+                    $this->rendered = true;
                     return $page;
                 }
 

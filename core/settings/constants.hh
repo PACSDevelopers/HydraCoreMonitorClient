@@ -58,6 +58,24 @@ if(!defined('MODE')) {
 
 if(!defined('TIMEZONE')) {
     define('TIMEZONE', 'Europe/London');
+    date_default_timezone_set('Europe/London');
+} else {
+    date_default_timezone_set(TIMEZONE);
+}
+
+if(!defined('TIMEZONE_OFFSET')) {
+    $utctimezone = new DateTimeZone('UTC');
+    $timezone = new DateTimeZone(TIMEZONE);
+    $offset = $timezone->getOffset(new DateTime(NULL, $utctimezone));
+    $offsetHours = round(abs($offset)/3600);
+    $offsetMinutes = round((abs($offset) - $offsetHours * 3600) / 60);
+    $offsetString = ($offset < 0 ? '-' : '+')
+        . ($offsetHours < 10 ? '0' : '') . $offsetHours
+        . ':'
+        . ($offsetMinutes < 10 ? '0' : '') . $offsetMinutes;
+    define('TIMEZONE_OFFSET', $offsetString);
+    $timezone = null;
+    unset($timezone);
 }
 
 if(!defined('ENCODING')) {

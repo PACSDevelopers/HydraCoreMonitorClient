@@ -167,14 +167,14 @@
 
             // Define trace
             $trace = [];
-            
+
             if (!is_array($traceArray) || !is_int($skip)) {
                 return $trace;
             }
-            
+
             // Get the debug trace, reversed and without the last $skip calls
             $traceArray = array_slice($traceArray, $skip);
-            
+
             // Loop through the trace
             foreach ($traceArray as $key => $value) {
                 $key++;
@@ -238,9 +238,9 @@
 
                     // Figure out how many arguments we have
                     $count = count($value['args']);
-                    
+
                     $redactedValues = ['Salt', 'salt', 'pass', 'Pass', 'password', 'Password', 'key', 'Key'];
-                    
+
                     // Loop through each argument
                     foreach ($value['args'] as $argKey => $argValue) {
 
@@ -295,39 +295,39 @@
                 $trace[] = $row . ';';
 
             }
-            
+
             return $trace;
 
         }
-        
+
         protected static function protectArray($array) {
             $newArray = [];
-            
+
             $redactedKeys = ['Salt', 'salt', 'pass', 'Pass', 'password', 'Password', 'key', 'Key'];
-            
+
             foreach($array as $key => $value) {
                 if(is_object($value)) {
                     $newArray[$key] = serialize($value);
                     continue;
                 }
-                
+
                 foreach($redactedKeys as $redactedKey) {
                     if(mb_strpos($key, $redactedKey) !== false) {
                         $newArray[$key] = '*REDACTED*';
                         break;
                     }
                 }
-                
+
                 if(is_array($value)) {
                     $newArray[$key] = $value = self::protectArray($value);
                 } else {
                     $newArray[$key] = $value;
                 }
             }
-            
+
             return $newArray;
         }
-        
+
         protected static function isErrorOfErrorSystem($trace) {
             foreach($trace as $key => $row) {
                 if(isset($row['file'])) {
@@ -338,7 +338,7 @@
             }
             return false;
         }
-        
+
         /**
          * @param $errno
          * @param $errstr
@@ -353,13 +353,21 @@
         public static function errorHandler($errno = 1, $errstr = '?', $errfile = '?', $errline = '?', $skipTrace = 0, $traceArray = [], $isException = false, $customError = false)
 
         {
-            $errorTypeInteger = self::friendlyErrorTypeInt($errno);
-            
-            if(($errorTypeInteger !== E_ERROR && $errorTypeInteger !== E_PARSE) && !$isException) {
-                if (ALLOW_ERRORS || error_reporting() === 0) {
-                    return true;
+            if($isException) {
+                $errorTypeInteger = E_USER_ERROR;
+                if($errno === 0) {
+                    $errno = $errorTypeInteger;
+                }
+            } else {
+                $errorTypeInteger = self::friendlyErrorTypeInt($errno);
+                if($errorTypeInteger !== E_ERROR && $errorTypeInteger !== E_PARSE) {
+                    if (ALLOW_ERRORS || error_reporting() === 0) {
+                        return true;
+                    }
                 }
             }
+
+
 
             // Force number from $skipTrace
             if (!is_int($skipTrace)) {
@@ -376,22 +384,24 @@
 
             // Determinte if we need to render html, or text
             $isCLI = (PHP_SAPI == 'cli');
-            
+
             $isErrorOfErrorSystem = self::isErrorOfErrorSystem($traceArray);
-            
+
             if($isErrorOfErrorSystem) {
                 $isCLI = true;
             }
-            
-            $errorDesc = self::friendlyErrorType($errno);
+
+            $errorDetails = [];
 
             if ($isException) {
+                $errorDesc = 'HC_USER_ERROR';
                 if($customError) {
                     $errorDesc .= '[' . $errno . '] Uncaught Exception "' . $customError . '" with message "' . $errstr . '" on line ';
                 } else {
                     $errorDesc .= '[' . $errno . '] Uncaught Exception with message "' . $errstr . '" on line ';
                 }
             } else {
+                $errorDesc = self::friendlyErrorType($errno);
                 if($customError) {
                     $errorDesc .= '[' . $errno . '] ' . $customError . ', ' . $errstr . ' on line ';
                 } else {
@@ -401,26 +411,40 @@
 
             $errorDesc .= $errline . ' of ' . $errfile;
 
-            $errorDetails = [];
-            
             $errorDetails['Description'] = $errorDesc;
-            
+
+            if ($isException) {
+                if($customError) {
+                    $errorDetails['Error Message'] = '"' .$customError . '" with message "' . $errstr . '"';
+                } else {
+                    $errorDetails['Error Message'] = $errstr;
+                }
+            } else {
+                if($customError) {
+                    $errorDetails['Error Message'] = $customError . ', ' . $errstr;
+                } else {
+                    $errorDetails['Error Message'] = $errstr;
+                }
+            }
+
+            $errorDetails['Error Number'] = $errno;
+
             $errorDetails['ID'] = crc32(var_export(func_get_args(), true));
-            
+
             if(isset($_SERVER['REQUEST_URI'])) {
                 $errorDetails['URL'] = PROTOCOL . '://' . SITE_DOMAIN . $_SERVER['REQUEST_URI'];
             } else {
                 $errorDetails['URL'] = PROTOCOL . '://' . SITE_DOMAIN;
             }
-            
+
             $errorDetails['Timestamp'] = time();
-            
+
             $errorDetails['HydraCore Version'] = HC_VERSION;
-            
+
             $errorDetails['Application Version'] = APP_VERSION;
-            
+
             $errorDetails['PHP Version'] = defined('HHVM_VERSION') ? PHP_VERSION . ' (HHVM: ' . HHVM_VERSION . ')' : PHP_VERSION;
-            
+
             if(PHP_OS === 'Linux') {
                 $errorDetails['Operating System'] = Site::getLinuxDistro() . ' Linux';
             } else {
@@ -428,7 +452,7 @@
             }
 
             $errorDetails['Trace'] = [];
-            
+
             // If we have a defined stack trace
             if (empty($traceArray)) {
                 // Get the formatted trace string based on the debug backtrace
@@ -441,30 +465,36 @@
                 $traceFirstLine = self::getErrorLine($errfile, $errline);
                 array_unshift($errorDetails['Trace'], $traceFirstLine);
             }
+            if(isset($GLOBALS['HC_CORE'])) {
+                $site = $GLOBALS['HC_CORE']->getSite();
+                if($site && !is_null($site)) {
+                    $globalSettings = $site->getSettings();
+                    if(isset($globalSettings['keys']) && isset($globalSettings['keys']['github'])) {
+                        $client = new \Github\Client();
+                        $client->authenticate($globalSettings['keys']['github'], NULL, \Github\Client::AUTH_HTTP_TOKEN);
 
-            $globalSettings = $GLOBALS['HC_CORE']->getSite()->getSettings();
-            if(isset($globalSettings['keys']) && isset($globalSettings['keys']['github'])) {
-                $client = new \Github\Client();
-                $client->authenticate($globalSettings['keys']['github'], NULL, \Github\Client::AUTH_HTTP_TOKEN);
+                        $errorDetails['Change Log'] = [];
+                        $commits = $client->api('repo')->commits()->all(REPO_USER, REPO_NAME, array('sha' => 'master', 'path' => str_replace(HC_LOCATION . '/', '', $errfile)));
 
-                $errorDetails['Change Log'] = [];
-                $commits = $client->api('repo')->commits()->all(REPO_USER, REPO_NAME, array('sha' => 'master', 'path' => str_replace(HC_LOCATION . '/', '', $errfile)));
-
-                foreach($commits as $key => $val) {
-                    $errorDetails['Change Log'][] = $val['commit']['author']['name'] . ' - ' . $val['commit']['author']['date'] . ' - ' . $val['commit']['message'];
-                }
-            }
-            
-            if(isset($_SESSION)) {
-                $safeSession = self::protectArray($_SESSION);
-                
-                foreach($safeSession as $key => $value) {
-                    if(is_array($value)) {
-                        $safeSession[$key] = json_encode($value, JSON_PRETTY_PRINT);
+                        foreach($commits as $key => $val) {
+                            $errorDetails['Change Log'][] = $val['commit']['author']['name'] . ' - ' . $val['commit']['author']['date'] . ' - ' . $val['commit']['message'];
+                        }
                     }
                 }
-                
-                $errorDetails['Session'] = $safeSession;
+            }
+
+            if(isset($_SESSION) && !empty($_SESSION)) {
+                $safeSession = self::protectArray($_SESSION);
+
+                if(!empty($safeSession)) {
+                    foreach($safeSession as $key => $value) {
+                        if(is_array($value)) {
+                            $safeSession[$key] = json_encode($value, JSON_PRETTY_PRINT);
+                        }
+                    }
+
+                    $errorDetails['Session'] = $safeSession;
+                }
             }
 
             if((ERROR_LOGGING === 'ALL') || (ERROR_LOGGING === 'FATAL' && ($errorTypeInteger === E_ERROR || $errorTypeInteger === E_PARSE))) {
@@ -489,7 +519,7 @@
 
                 $data = $errorDetails;
                 unset($data['Timestamp']);
-                
+
                 $data = $encryption->encrypt(json_encode($data), 'HC_ERROR_' . $errorDetails['ID']);
 
                 // If could be encrypted
@@ -543,7 +573,7 @@
                 $mail = new \HC\Email();
                 $mail->send(ERROR_ADDRESS, SITE_DOMAIN . ': ' . 'Failed (500 - Internal Server Error)', $message);
             }
-            
+
             // Clean all previous input
             if (ob_get_length()) {
 
@@ -552,7 +582,7 @@
             }
 
             $GLOBALS['skipShutdown'] = true;
-            
+
             if ($isCLI) {
                 var_dump($errorDetails);
             } else {
@@ -579,7 +609,7 @@
             return ' ' . $file . ':' . $line;
         }
 
-        <<__Memoize>>
+    <<__Memoize>>
         protected static function friendlyErrorType($type)
         {
             $return = '';
@@ -617,7 +647,7 @@
             return mb_substr($return,2);
         }
 
-        <<__Memoize>>
+    <<__Memoize>>
         protected static function friendlyErrorTypeInt($type)
         {
             if($type & E_ERROR) // 1 //
@@ -691,7 +721,7 @@
 
                     Error::errorHandler(E_PARSE, $result, $file, $lastnum, 2, [], false, 'Syntax Error');
                 }
-                
+
                 return false;
             }
 
@@ -736,15 +766,16 @@
                     $errorDescription = $this->errorDescription[$code];
                 }
             }
-            
+
             if((isset($_SERVER['HTTP_X_REQUESTED_WITH']) && !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') || defined('MODE') && MODE === 'API') {
                 $pageSettings = [
                     'views' => [
                         'body'   => true
                     ]
                 ];
-                
+
                 $errorPage = new \HC\Ajax($pageSettings);
+
                 $errorPage->body = ['status' => $code, 'message' => self::$errorTitle[$code], 'errorDescription' => $errorDescription, 'errorDetails' => $errorDetails];
             } else {
                 $pageSettings = [
@@ -761,7 +792,7 @@
 
                 $devInfo = '';
                 if($errorDetails) {
-                    
+
                     $errorInfo = <div></div>;
                     
                     foreach($errorDetails as $key => $value) {
@@ -780,7 +811,7 @@
 
                     $devInfo = <x:frag><h2>Error Details</h2>{$errorInfo}</x:frag>;
                 }
-                
+
                 $errorPage->body = <div class="container">
                                         <div class="row">
                                             <h1>Error - {$actualCode} - {self::$errorTitle[$code]}</h1>
@@ -798,11 +829,11 @@
             if (ob_get_length()) {
                 ob_clean();
             }
-            
+
             if($skips) {
                 $GLOBALS['skipShutdown'] = true;
             }
-            
+
             try {
                 if($return) {
                     return $errorPage;
@@ -812,11 +843,11 @@
             } catch (\Exception $exception) {
                 Error::exceptionHandler($exception);
             }
-            
+
             if($skips) {
                 $GLOBALS['skipRender'] = true;
             }
-            
+
             if(PHP_SAPI !== 'cli' && !headers_sent()) {
                 http_response_code($actualCode);
                 if(isset($errorDetails['ID'])) {

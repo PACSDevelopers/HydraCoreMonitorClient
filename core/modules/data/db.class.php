@@ -139,7 +139,7 @@ class DB extends Core
                     \PDO::ATTR_TIMEOUT => $this->settings['timeout'],
                     \PDO::ATTR_PERSISTENT => $this->settings['persistant'],
                     \PDO::ATTR_DEFAULT_FETCH_MODE => $this->defaultFetchType,
-                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . DB_ENCODING
+                    \PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES ' . DB_ENCODING . ';'
                 ]);
                 
             } catch (\PDOException $exception) {
@@ -155,6 +155,15 @@ class DB extends Core
                     throw new \Exception('Unable to connect to database.');
                 } else {
                     Error::exceptionHandler(new \Exception('Unable to connect to database.'));
+                }
+            } else {
+                $result = $this->query('SET @@session.time_zone = :time;', ['time' => TIMEZONE_OFFSET]);
+                if(!$result) {
+                    if($this->settings['throwExceptions']) {
+                        throw new \Exception('Unable to set timezone.');
+                    } else {
+                        Error::exceptionHandler(new \Exception('Unable to set timezone.'));
+                    }
                 }
             }
             return true;

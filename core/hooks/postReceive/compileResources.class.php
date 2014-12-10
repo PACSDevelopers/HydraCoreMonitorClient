@@ -157,7 +157,9 @@
                 if(file_exists(HC_TMP_LOCATION . '/compilation/cache.json')) {
                     $this->cache = json_decode(file_get_contents(HC_TMP_LOCATION . '/compilation/cache.json'), true);
                 } else {
-                    mkdir(HC_TMP_LOCATION, 0777);
+                    if(!is_dir(HC_TMP_LOCATION)) {
+                        mkdir(HC_TMP_LOCATION, 0777);
+                    }
                     mkdir(HC_TMP_LOCATION . '/compilation', 0777);
                 }
             }
